@@ -1,0 +1,1002 @@
+ParticleSystem Parameters
+
+A reference for configuring the Three.js particle system.
+
+The API is intentionally grouped into logical sections, similar to Godot's particle system and ParticleProcessMaterial.
+
+System
+
+These parameters control the overall particle emitter.
+
+amount
+
+Type: number
+Default: 100
+
+Maximum number of particles that can exist simultaneously.
+
+amount: 1000
+
+
+Higher values produce denser effects but require more CPU simulation work.
+
+lifetime
+
+Type: number
+Default: 1
+
+How long each particle lives, in seconds.
+
+lifetime: 2
+
+
+A lifetime of 2 means a particle exists for approximately two seconds before
+being removed.
+
+oneShot
+
+Type: boolean
+Default: false
+
+Controls whether the emitter continuously emits particles or performs a
+single emission cycle.
+
+oneShot: true
+
+false — continuously emit particles.
+true — emit once and stop after the emission cycle.
+
+Useful for effects such as explosions, impacts, and muzzle flashes.
+
+preprocess
+
+Type: number
+Default: 0
+
+Simulates the particle system before it becomes visible.
+
+preprocess: 2
+
+
+For example, with:
+
+preprocess: 2
+
+
+the system behaves as though it has already been running for two seconds when
+it starts.
+
+This is useful for smoke, fire, waterfalls, or other effects that should not
+appear to start from an empty state.
+
+randomness
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Adds randomness to particle lifetime.
+
+randomness: 0.25
+
+
+A value of 0 gives every particle the full lifetime.
+
+Higher values allow particles to die earlier.
+
+localCoords
+
+Type: boolean
+Default: false
+
+Determines whether particles move relative to their emitter.
+
+localCoords: true
+
+
+When enabled, moving the emitter also moves existing particles.
+
+This is useful for effects attached to objects:
+
+Spaceship
+└── Engine particles
+
+
+With local coordinates, the particles remain attached to the spaceship.
+
+With world coordinates, particles are left behind when the spaceship moves.
+
+Emission
+
+The emission object controls where particles are spawned.
+
+emission: {
+    shape: 'point',
+    radius: 1,
+    boxExtents: new THREE.Vector3(1, 1, 1),
+}
+
+emission.shape
+
+Type: string
+Default: 'point'
+
+Controls the geometry used to spawn particles.
+
+Available shapes:
+
+'point'
+'sphere'
+'sphere_surface'
+'box'
+
+point
+
+All particles start at the emitter origin.
+
+emission: {
+    shape: 'point',
+}
+
+
+Useful for:
+
+sparks
+fire
+muzzle flashes
+magic effects
+sphere
+
+Particles spawn randomly inside a sphere.
+
+emission: {
+    shape: 'sphere',
+    radius: 1,
+}
+
+sphere_surface
+
+Particles spawn on the surface of a sphere.
+
+emission: {
+    shape: 'sphere_surface',
+    radius: 1,
+}
+
+
+Useful for:
+
+explosions
+spherical force effects
+planet atmospheres
+box
+
+Particles spawn randomly inside a box.
+
+emission: {
+    shape: 'box',
+
+    boxExtents:
+        new THREE.Vector3(2, 1, 2),
+}
+
+emission.radius
+
+Type: number
+Default: 1
+
+Radius used by sphere-based emission shapes.
+
+emission: {
+    shape: 'sphere',
+    radius: 2,
+}
+
+
+Larger values create a larger emission volume.
+
+emission.boxExtents
+
+Type: THREE.Vector3
+
+Controls the half-size of the box emission volume.
+
+emission: {
+    shape: 'box',
+
+    boxExtents:
+        new THREE.Vector3(2, 1, 2),
+}
+
+
+The resulting box is approximately:
+
+       Y
+       |
+       |
+   +-------+
+  /       /|
+ +-------+ |
+ |       | +
+ |       |/
+ +-------+
+
+X and Z determine width/depth.
+Y determines height.
+
+Direction
+
+The direction object controls the initial direction of particles.
+
+direction: {
+    direction:
+        new THREE.Vector3(0, 1, 0),
+
+    spread: 20,
+}
+
+direction.direction
+
+Type: THREE.Vector3
+Default: (0, 1, 0)
+
+The primary direction particles travel.
+
+direction: {
+    direction:
+        new THREE.Vector3(0, 1, 0),
+}
+
+
+Examples:
+
+// Up
+new THREE.Vector3(0, 1, 0)
+
+// Down
+new THREE.Vector3(0, -1, 0)
+
+// Forward
+new THREE.Vector3(0, 0, -1)
+
+// Right
+new THREE.Vector3(1, 0, 0)
+
+
+The vector is normalized internally.
+
+direction.spread
+
+Type: number
+Unit: degrees
+Default: 0
+
+Controls how far particles can deviate from the primary direction.
+
+direction: {
+    direction:
+        new THREE.Vector3(0, 1, 0),
+
+    spread: 30,
+}
+
+
+Conceptually:
+
+             /
+            /
+           /
+          ↑
+         /|\
+        / | \
+       /  |  \
+      /   |   \
+
+
+0 creates a narrow beam.
+
+Larger values create a wider cone.
+
+Useful values:
+
+0°    laser / beam
+10°   narrow stream
+30°   smoke / fire
+60°   fountain
+90°   hemisphere-like emission
+
+Initial
+
+The initial object controls properties assigned when a particle is spawned.
+
+initial: {
+    velocity: 3,
+    velocityRandom: 0.2,
+}
+
+initial.velocity
+
+Type: number
+Default: 1
+
+Initial movement speed.
+
+initial: {
+    velocity: 5,
+}
+
+
+The actual velocity is:
+
+direction × velocity
+
+
+For example:
+
+direction:
+    new THREE.Vector3(0, 1, 0)
+
+velocity:
+    5
+
+
+produces an initial velocity of approximately:
+
+(0, 5, 0)
+
+initial.velocityRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes the initial velocity.
+
+initial: {
+    velocity: 5,
+    velocityRandom: 0.25,
+}
+
+
+A value of 0.25 allows approximately ±25% variation.
+
+This makes particles look less uniform.
+
+Velocity
+
+The velocity object contains forces and movement modifiers applied while
+particles are alive.
+
+velocity: {
+    gravity:
+        new THREE.Vector3(0, -9.8, 0),
+
+    damping: 0,
+
+    radial: 0,
+    tangential: 0,
+    orbit: 0,
+}
+
+velocity.gravity
+
+Type: THREE.Vector3
+Default: (0, -9.8, 0)
+
+Constant acceleration applied to particles.
+
+velocity: {
+    gravity:
+        new THREE.Vector3(0, -9.8, 0),
+}
+
+
+Earth-like gravity:
+
+new THREE.Vector3(0, -9.8, 0)
+
+
+No gravity:
+
+new THREE.Vector3(0, 0, 0)
+
+
+Moon-like gravity:
+
+new THREE.Vector3(0, -1.62, 0)
+
+
+You can also use arbitrary forces:
+
+new THREE.Vector3(0, 3, 0)
+
+
+which continuously accelerates particles upward.
+
+velocity.damping
+
+Type: number
+Default: 0
+
+Slows particles over time.
+
+velocity: {
+    damping: 1,
+}
+
+
+This is useful for:
+
+smoke
+dust
+debris
+magic particles
+
+Without damping:
+
+velocity ────────────────>
+
+
+With damping:
+
+velocity ────────>
+             ───>
+               ─>
+
+velocity.dampingRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Adds randomness to damping.
+
+velocity: {
+    damping: 1,
+    dampingRandom: 0.3,
+}
+
+
+Particles will slow down at slightly different rates.
+
+velocity.radial
+
+Type: number
+Default: 0
+
+Moves particles away from or toward their radial position.
+
+Positive values push particles outward.
+
+velocity: {
+    radial: 5,
+}
+
+
+Negative values pull particles inward.
+
+velocity: {
+    radial: -5,
+}
+
+
+Useful for:
+
+explosions
+implosions
+shockwaves
+vortex-like effects
+velocity.radialRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes radial velocity.
+
+velocity: {
+    radial: 5,
+    radialRandom: 0.5,
+}
+
+velocity.tangential
+
+Type: number
+Default: 0
+
+Moves particles around the emitter rather than directly away from it.
+
+velocity: {
+    tangential: 3,
+}
+
+
+This can create swirling motion.
+
+velocity.tangentialRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes tangential velocity.
+
+velocity: {
+    tangential: 3,
+    tangentialRandom: 0.5,
+}
+
+velocity.orbit
+
+Type: number
+Default: 0
+
+Controls orbital movement around the emitter.
+
+velocity: {
+    orbit: 2,
+}
+
+
+Higher values create stronger circular motion.
+
+Note: the current implementation exposes this parameter but does not yet
+fully implement Godot-equivalent orbit behavior. It should eventually be
+implemented as an actual orbital velocity modifier.
+
+velocity.orbitRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes orbital velocity.
+
+velocity: {
+    orbit: 2,
+    orbitRandom: 0.3,
+}
+
+Scale
+
+The scale object controls particle size.
+
+scale: {
+    value: 1,
+    random: 0,
+    curve: [0, 1, 1, 0],
+}
+
+scale.value
+
+Type: number
+Default: 1
+
+Base particle scale.
+
+scale: {
+    value: 2,
+}
+
+
+A value of 2 makes particles twice their original geometry size.
+
+scale.random
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes particle scale.
+
+scale: {
+    value: 1,
+    random: 0.5,
+}
+
+
+Particles will have different sizes.
+
+scale.curve
+
+Type: number[] or function
+Default: null
+
+Controls scale over the particle's lifetime.
+
+For example:
+
+scale: {
+    value: 1,
+
+    curve: [
+        0,
+        1,
+        1,
+        0,
+    ],
+}
+
+
+Conceptually:
+
+scale
+
+1       /──────\
+       /        \
+      /          \
+0 ───/────────────\───
+    0%            100%
+
+        lifetime
+
+
+The curve is evaluated using normalized lifetime:
+
+0 = particle just spawned
+1 = particle about to die
+
+
+A simple fade-in:
+
+curve: [
+    0,
+    1,
+]
+
+
+A fade-out:
+
+curve: [
+    1,
+    0,
+]
+
+
+A pop effect:
+
+curve: [
+    0,
+    1.5,
+    1,
+    0,
+]
+
+Color
+
+The color object controls particle color.
+
+color: {
+    value: '#ffaa33',
+}
+
+color.value
+
+Type: THREE.Color or color string
+
+Base particle color.
+
+color: {
+    value: '#ff5500',
+}
+
+
+Examples:
+
+'#ff0000' // red
+'#00ff00' // green
+'#0000ff' // blue
+'#ffffff' // white
+'#ffaa33' // orange
+
+color.curve
+
+Type: function or color value
+
+Controls color changes over the lifetime.
+
+Conceptually:
+
+color: {
+    value: new THREE.Color(1, 1, 1),
+
+    curve: t => {
+        return new THREE.Color(
+            1,
+            1 - t,
+            0
+        );
+    },
+}
+
+
+The curve receives normalized lifetime:
+
+0 → spawned
+1 → dead
+
+
+The current renderer does not yet upload p.color to an
+InstancedMesh color attribute. The property is therefore part of the
+intended API but needs instance-color support to become visible.
+
+Rotation
+
+The rotation object controls particle orientation and angular movement.
+
+rotation: {
+    value: 0,
+    random: 1,
+    speed: 2,
+    speedRandom: 0.5,
+}
+
+rotation.value
+
+Type: number
+Unit: radians
+Default: 0
+
+Initial particle rotation.
+
+rotation: {
+    value: Math.PI / 2,
+}
+
+rotation.random
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes the initial rotation.
+
+rotation: {
+    random: 1,
+}
+
+
+A value of 1 allows the full rotation range.
+
+Useful for:
+
+leaves
+debris
+sprites
+sparks
+confetti
+rotation.speed
+
+Type: number
+Unit: radians/second
+Default: 0
+
+Angular velocity.
+
+rotation: {
+    speed: 5,
+}
+
+
+Positive values rotate in one direction.
+
+Negative values rotate in the opposite direction.
+
+rotation: {
+    speed: -5,
+}
+
+rotation.speedRandom
+
+Type: number
+Range: 0 – 1
+Default: 0
+
+Randomizes angular velocity.
+
+rotation: {
+    speed: 5,
+    speedRandom: 0.5,
+}
+
+
+Particles will rotate at different speeds.
+
+Example Configurations
+Fire
+{
+    amount: 1000,
+
+    lifetime: 1,
+
+    emission: {
+        shape: 'sphere',
+        radius: 0.2,
+    },
+
+    direction: {
+        direction:
+            new THREE.Vector3(0, 1, 0),
+
+        spread: 25,
+    },
+
+    initial: {
+        velocity: 2,
+        velocityRandom: 0.5,
+    },
+
+    velocity: {
+        gravity:
+            new THREE.Vector3(0, 1, 0),
+
+        damping: 1,
+    },
+
+    scale: {
+        value: 0.5,
+        random: 0.5,
+
+        curve: [
+            0,
+            1,
+            1,
+            0,
+        ],
+    },
+}
+
+Explosion
+{
+    amount: 500,
+
+    lifetime: 1.5,
+
+    oneShot: true,
+
+    emission: {
+        shape: 'sphere',
+        radius: 0.1,
+    },
+
+    direction: {
+        direction:
+            new THREE.Vector3(0, 1, 0),
+
+        spread: 180,
+    },
+
+    initial: {
+        velocity: 8,
+        velocityRandom: 0.5,
+    },
+
+    velocity: {
+        gravity:
+            new THREE.Vector3(0, -5, 0),
+
+        damping: 1,
+    },
+
+    scale: {
+        value: 0.2,
+        random: 0.5,
+
+        curve: [
+            1,
+            1,
+            0,
+        ],
+    },
+}
+
+Fountain
+{
+    amount: 2000,
+
+    lifetime: 3,
+
+    emission: {
+        shape: 'point',
+    },
+
+    direction: {
+        direction:
+            new THREE.Vector3(0, 1, 0),
+
+        spread: 15,
+    },
+
+    initial: {
+        velocity: 8,
+        velocityRandom: 0.2,
+    },
+
+    velocity: {
+        gravity:
+            new THREE.Vector3(0, -9.8, 0),
+
+        damping: 0.1,
+    },
+
+    scale: {
+        value: 0.08,
+
+        curve: [
+            0,
+            1,
+            1,
+            0,
+        ],
+    },
+}
+
+Parameter Hierarchy
+
+The overall configuration can be thought of as:
+
+ParticleSystem
+│
+├── System
+│   ├── amount
+│   ├── lifetime
+│   ├── oneShot
+│   ├── preprocess
+│   ├── randomness
+│   └── localCoords
+│
+├── Emission
+│   ├── shape
+│   ├── radius
+│   └── boxExtents
+│
+├── Direction
+│   ├── direction
+│   └── spread
+│
+├── Initial
+│   ├── velocity
+│   └── velocityRandom
+│
+├── Velocity
+│   ├── gravity
+│   ├── damping
+│   ├── dampingRandom
+│   ├── radial
+│   ├── radialRandom
+│   ├── tangential
+│   ├── tangentialRandom
+│   ├── orbit
+│   └── orbitRandom
+│
+├── Scale
+│   ├── value
+│   ├── random
+│   └── curve
+│
+├── Color
+│   ├── value
+│   └── curve
+│
+└── Rotation
+    ├── value
+    ├── random
+    ├── speed
+    └── speedRandom
+
+
+This grouping is deliberately designed so that additional Godot-style
+particle properties can be added without making the ParticleSystem
+constructor unwieldy.
+
+Potential future groups include:
+
+Collision
+Turbulence
+Animation
+SubEmitter
+Attraction
+DirectionalVelocity
+ColorRamp
+EmissionMask
+Trail
