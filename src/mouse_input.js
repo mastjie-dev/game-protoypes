@@ -23,7 +23,7 @@ export default class MouseInput {
 	};
 
 	onDown = (event) => {
-		this.buttons.add(event.button);
+        this.buttons.add(event.button);
 	};
 
 	onUp = (event) => {

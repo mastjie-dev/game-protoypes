@@ -6,12 +6,12 @@ export default class PlayerCamera {
 		this.player = player;
 
 		this.offset = options.offset?.clone() ??
-			new Vector3(0, 5, 10);
+			new Vector3(0, 15, 3);
 
 		this.lookOffset = options.lookOffset?.clone() ??
-			new Vector3(0, 1, 0);
+			new Vector3(0, 0, 0);
 
-		this.smoothing = options.smoothing ?? 10;
+		this.smoothing = options.smoothing ?? 2;
 
 		this.minDistance = options.minDistance ?? 3;
 		this.maxDistance = options.maxDistance ?? 20;

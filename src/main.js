@@ -12,6 +12,7 @@ import KeyboardInput from './keyboard_input.js';
 import PlayerController from './player_controller.js';
 import ScreenRaycaster from './screen_raycaster.js';
 import PlayerCamera from './player_camera.js'
+import ArrowsPool from './arrows_pool.js'
 
 import './style.css'
 
@@ -27,7 +28,7 @@ async function main() {
         0.1,
         200
     );
-    camera.position.set(8, 10, 8);
+    camera.position.set(0, 10, 8);
     camera.lookAt(0, 0, 0)
 
     const renderer = new WebGLRenderer({ antialias: true });
@@ -41,7 +42,7 @@ async function main() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = PCFShadowMap;
     document.body.appendChild(renderer.domElement);
-    
+   
     /*
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -134,26 +135,31 @@ async function main() {
     stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
     document.body.appendChild(stats.dom);
 
+    const floorPosition = new Vector3()
+    const arrows = new ArrowsPool(boxGeometry, boxMaterial, 20)
+    scene.add(arrows.mesh)
+    
     renderer.setAnimationLoop(() => {
         stats.begin();
         timer.update();
         const delta = timer.getDelta();
         
-        const floorPosition = new Vector3()
         const hits = screenRaycaster.intersect(
             mouse.x, mouse.y, floor);
 
         if (hits.length > 0) {
             floorPosition.copy(hits[0].point)
         }
-        
+               
+        arrows.update(delta)
         controller.update(delta, floorPosition)
         playerCamera.update(delta)
 
         renderer.render(scene, camera);
         stats.end();
     });
-    
+        
+
     window.addEventListener('resize', () => {
           camera.aspect =
             window.innerWidth / window.innerHeight;
@@ -161,6 +167,10 @@ async function main() {
           renderer.setSize(window.innerWidth, window.innerHeight);
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
+
+    renderer.domElement.addEventListener("click", () => {
+        arrows.shoot(player.position, floorPosition)     
+    })
 
     /*
     renderer.domElement.addEventListener('pointerdown', (event) => {
