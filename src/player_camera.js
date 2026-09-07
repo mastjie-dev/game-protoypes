@@ -6,7 +6,7 @@ export default class PlayerCamera {
 		this.player = player;
 
 		this.offset = options.offset?.clone() ??
-			new Vector3(0, 15, 3);
+			new Vector3(0, 20, 2);
 
 		this.lookOffset = options.lookOffset?.clone() ??
 			new Vector3(0, 0, 0);
@@ -33,8 +33,8 @@ export default class PlayerCamera {
 
 		this.camera.position.lerp(
 			this.target,
-			factor
-		);
+		    .9
+        );
 
 		this.lookTarget.copy(this.player.position)
 			.add(this.lookOffset);

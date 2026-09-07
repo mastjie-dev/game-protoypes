@@ -2,7 +2,7 @@ import {
     Scene, Color, PerspectiveCamera, WebGLRenderer, MeshStandardMaterial,
     DirectionalLight, AmbientLight, Timer, CapsuleGeometry, PlaneGeometry,
     PCFShadowMap, Mesh, TextureLoader, Vector3, SphereGeometry,
-    MeshBasicMaterial, BoxGeometry,
+    MeshBasicMaterial, BoxGeometry, Box3, Box3Helper,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
@@ -13,6 +13,7 @@ import PlayerController from './player_controller.js';
 import ScreenRaycaster from './screen_raycaster.js';
 import PlayerCamera from './player_camera.js'
 import ArrowsPool from './arrows_pool.js'
+import Enemy from './enemy.js'
 
 import './style.css'
 
@@ -43,11 +44,9 @@ async function main() {
     renderer.shadowMap.type = PCFShadowMap;
     document.body.appendChild(renderer.domElement);
    
-    /*
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 1, 0);
-    */
 
     const ambientLight = new AmbientLight(
       0xffffff,
@@ -117,14 +116,23 @@ async function main() {
     const box = new Mesh(boxGeometry, boxMaterial)
     box.position.set(0, .8, -.5)
     player.add(box)
+   
+    const rPos = new Vector3().randomDirection().multiplyScalar(10);
+    rPos.y = 2;
+    const enemy = new Enemy(rPos);
+    enemy.addToScene(scene);
     
+    const enemyBBox = new Box3(new Vector3(-3.25, 0, -3.25), new Vector3(3.25, 0, 3.25));
+    const enemyBBoxH = new Box3Helper(enemyBBox);
+    scene.add(enemyBBoxH);
+
     const mouse = new MouseInput(renderer.domElement)
     const keyboard = new KeyboardInput()
-    const controller = new PlayerController(player, keyboard)
+    const controller = new PlayerController(player, keyboard, 8)
     const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
     const playerCamera = new PlayerCamera(camera, player, {
-        offset: new Vector3(0, 16, 8),
-        lookOffset: new Vector3(0, 1.5, 0),
+        offset: new Vector3(0, 20, 8),
+        lookOffset: new Vector3(0, 1, 0),
         smoothing: 10,
         minDistance: 5,
         maxDistance: 30
@@ -138,7 +146,15 @@ async function main() {
     const floorPosition = new Vector3()
     const arrows = new ArrowsPool(boxGeometry, boxMaterial, 20)
     scene.add(arrows.mesh)
-    
+
+    const markerMaterial = new MeshBasicMaterial({ color: 0x00FF00 });
+    const marker = new Mesh(boxGeometry, markerMaterial);
+    marker.scale.set(1.5*2, .5, 1.5);
+    scene.add(marker);
+
+    const minDistance = 8;
+    const maxDistance = 16;
+
     renderer.setAnimationLoop(() => {
         stats.begin();
         timer.update();
@@ -148,17 +164,38 @@ async function main() {
             mouse.x, mouse.y, floor);
 
         if (hits.length > 0) {
-            floorPosition.copy(hits[0].point)
+            floorPosition.copy(hits[0].point);
+            const distance = hits[0].point.distanceTo(player.position);
+            marker.position.copy(hits[0].point);
+            if (distance < minDistance) {
+                const p = new Vector3(player.position.x, 0, player.position.z);
+                marker.position.sub(p);
+                marker.position.normalize().multiplyScalar(minDistance).add(p);
+            }
+            else if (distance > maxDistance) {
+                const p = new Vector3(player.position.x, 0, player.position.z);
+                marker.position.sub(p);
+                marker.position.normalize().multiplyScalar(maxDistance).add(p);
+            }
         }
-               
+        
+        /*
+        enemyBBox.setFromObject(enemy.group);
+        for (let arrow of arrows.arrows) {
+            if (enemyBBox.containsPoint(arrow.position)) {
+                console.log("enemy being hit");
+            }
+        }
+        */
+
         arrows.update(delta)
         controller.update(delta, floorPosition)
         playerCamera.update(delta)
+        //enemy.update(player, delta);
 
         renderer.render(scene, camera);
         stats.end();
     });
-        
 
     window.addEventListener('resize', () => {
           camera.aspect =
@@ -169,7 +206,7 @@ async function main() {
     });
 
     renderer.domElement.addEventListener("click", () => {
-        arrows.shoot(player.position, floorPosition)     
+        arrows.shoot(player.position, marker.position)     
     })
 
     /*

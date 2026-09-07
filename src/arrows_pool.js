@@ -25,7 +25,11 @@ export default class ArrowsPool {
 		for (let i = 0; i < count; i++) {
 			this.arrows.push({
                 position: new Vector3(),
-                velocity: new Vector3(),
+                start: new Vector3(),
+                target: new Vector3(),
+                distance: 0,
+                elapsed: 0,
+                flightTime: 0,
 				active: false
 			});
 		}
@@ -49,41 +53,49 @@ export default class ArrowsPool {
 			this.index = 0;
 		}
         
-        const T = target.clone();
-        const D = T.distanceTo(position);
-        const G = Math.min(15, Math.max(0, D - 6)) / 15;
-        const flightTime = MathUtils.lerp(.3, .5, G);
-
         const arrow = this.arrows[this.index];
-        const start = position.clone().add(this.offset);
-        const velocity = this._calculateBallisticVelocity1(start, T, flightTime);
-        arrow.velocity.copy(velocity);
-        arrow.position.copy(start);
-        arrow.distance = position.distanceTo(T);
-        arrow.elapsed = 0;
-		arrow.active = true;
+        arrow.start.copy(position);
+        arrow.target.copy(target);
+        arrow.distance = position.distanceTo(target);
+        arrow.active = true;
 
+        const t = (arrow.distance - 8) / 16; // TODO: remove hardcoded
+        arrow.flightTime = MathUtils.lerp(.5, .65, t);
+        
 		this.index++;
 	}
 
     // for stylized effect, xz lerp(start, target, t)
-    _getTrajectoryPosition(t, distance, curveAmount = 0.25) {
+    _getTrajectoryPosition(arrow, t, curveAmount = 0.35) {
+        const { start, target, distance } = arrow;
+        const x = MathUtils.lerp(start.x, target.x, t);
+        const z = MathUtils.lerp(start.z, target.z, t);
+
         const arc = Math.sin(Math.PI * t)
             * distance
             * curveAmount;
-        return arc;
+        return new Vector3(x, arc, z);
     }
 
 	update(deltaTime) {
 	    let i = 0;
         for (let arrow of this.arrows) {
-            if (!arrow.active) continue;
-            arrow.velocity.y -= this.gravity * deltaTime;
-            const vel = arrow.velocity.clone();
-            vel.multiplyScalar(deltaTime)
-            arrow.position.add(vel);
+            if (!arrow.active) {
+                i++;
+                continue;
+            };
+            if (arrow.position.y < -1) {
+                this.clear(arrow);
+                i++;
+                continue;
+            }
 
-            const direction = arrow.velocity.clone().normalize();
+            const t = arrow.elapsed / arrow.flightTime;
+            const V = this._getTrajectoryPosition(arrow, t);
+            arrow.position.copy(V);
+            const direction = arrow.target.clone().sub(V).normalize();
+            arrow.elapsed += deltaTime;
+
             this.dummy.position.copy(arrow.position);
 			this.dummy.quaternion.setFromUnitVectors(
 				new Vector3(0, 0, 1),
@@ -94,6 +106,15 @@ export default class ArrowsPool {
             i++;
         }
         this.mesh.instanceMatrix.needsUpdate = true;
+    }
+
+    clear(arrow) {
+        arrow.active = false;
+        arrow.elapsed = 0;
+        arrow.flightTime = 0;
+        arrow.position.set(0, 0, 0);
+        arrow.start.set(0, 0, 0);
+        arrow.target.set(0, 0, 0);
     }
 
 	reset() {
