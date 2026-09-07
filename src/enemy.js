@@ -6,7 +6,7 @@ export default class Enemy {
         this.group.position.copy(position);
 
         // --- Body ---
-        const material = new THREE.MeshStandardMaterial({
+        const material = new THREE.MeshPhongMaterial({
             color: 0xff4444
         });
 
@@ -15,6 +15,7 @@ export default class Enemy {
 
         this.body = new THREE.Mesh(geometry, material);
         this.body.scale.multiplyScalar(1.5);
+        this.body.castShadow = true;
         this.group.add(this.body);
 
         // Animation settings

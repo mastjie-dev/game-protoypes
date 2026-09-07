@@ -20,6 +20,13 @@ export default class ArrowsPool {
 		this.speed = 5;
 		this.gravity = 9.81;
 
+        this.dummy.position.y = -2;
+        this.dummy.updateMatrix();
+        for (let i = 0; i < count; i++) {
+            this.mesh.setMatrixAt(i, this.dummy.matrix);
+        }
+        this.mesh.instanceMatrix.needsUpdate = true;
+
 		this.arrows = [];
 
 		for (let i = 0; i < count; i++) {

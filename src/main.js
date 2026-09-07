@@ -2,7 +2,8 @@ import {
     Scene, Color, PerspectiveCamera, WebGLRenderer, MeshStandardMaterial,
     DirectionalLight, AmbientLight, Timer, CapsuleGeometry, PlaneGeometry,
     PCFShadowMap, Mesh, TextureLoader, Vector3, SphereGeometry,
-    MeshBasicMaterial, BoxGeometry, Box3, Box3Helper,
+    MeshBasicMaterial, BoxGeometry, Box3, Box3Helper, Object3D,
+    MeshPhongMaterial, BasicShadowMap,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
@@ -14,6 +15,7 @@ import ScreenRaycaster from './screen_raycaster.js';
 import PlayerCamera from './player_camera.js'
 import ArrowsPool from './arrows_pool.js'
 import Enemy from './enemy.js'
+import ParticleSystem from './particles_system.js'
 
 import './style.css'
 
@@ -24,7 +26,7 @@ async function main() {
 
     const aspect = window.innerWidth / window.innerHeight;
     const camera = new PerspectiveCamera(
-        60,
+        70,
         aspect,
         0.1,
         200
@@ -34,19 +36,21 @@ async function main() {
 
     const renderer = new WebGLRenderer({ antialias: true });
     renderer.setSize(
-        800, //window.innerWidth,
-        480  //window.innerHeight
+        window.innerWidth,
+        window.innerHeight
     );
     renderer.setPixelRatio(
         Math.min(window.devicePixelRatio, 2)
     );
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFShadowMap;
+    renderer.shadowMap.type = BasicShadowMap;
     document.body.appendChild(renderer.domElement);
-   
+  
+    /*
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 1, 0);
+    */
 
     const ambientLight = new AmbientLight(
       0xffffff,
@@ -60,31 +64,33 @@ async function main() {
     sun.position.set(10, 15, 10);
     sun.castShadow = true;
 
-    sun.shadow.mapSize.set(1048, 1048);
-    sun.shadow.camera.left = -25;
-    sun.shadow.camera.right = 25;
-    sun.shadow.camera.top = 25;
-    sun.shadow.camera.bottom = -25;
+    sun.shadow.mapSize.set(512, 512);
+    sun.shadow.camera.left = -20;
+    sun.shadow.camera.right = 20;
+    sun.shadow.camera.top = 20;
+    sun.shadow.camera.bottom = -20;
     scene.add(sun);
 
     const textureLoader = new TextureLoader();
-    const uvTexture = textureLoader.load('/uv_checker256.png');
+    const uvTexture = textureLoader.load('/uv_texture_bw.png');
 
-    const floorGeometry = new PlaneGeometry(50, 50);
-    const floorMaterial = new MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.8,
-        metalness: 0,
-        map: uvTexture,
-    });
-    const floor = new Mesh(
-      floorGeometry,
-      floorMaterial
-    );
-
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
+    const floorGeometry = new PlaneGeometry(20, 20);
+    const floorMaterial = new MeshPhongMaterial({ map: uvTexture });
+    const floors = [];
+    
+    for (let y = -20; y <= 20; y+=20) {
+        for (let x = -20; x <= 20; x+=20) {
+            const floor = new Mesh(
+              floorGeometry,
+              floorMaterial
+            );
+            floor.position.set(x, 0, y)
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+            floors.push(floor);
+        }
+    }
 
     const capsuleGeometry = new CapsuleGeometry(
       0.5,  // radius
@@ -92,11 +98,7 @@ async function main() {
       16,   // cap segments
       32    // radial segments
     );
-    const capsuleMaterial = new MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.45,
-      metalness: 0.05
-    });
+    const capsuleMaterial = new MeshPhongMaterial({ color: 0x22EE41 })
     
     const player = new Mesh(
       capsuleGeometry,
@@ -108,30 +110,29 @@ async function main() {
     scene.add(player);
     
     const boxGeometry = new BoxGeometry(.4, .4, 1);
-    const boxMaterial = new MeshStandardMaterial({
-      color: 0xff0000,
-      roughness: 0.45,
-      metalness: 0.05
-    });
-    const box = new Mesh(boxGeometry, boxMaterial)
+    const box = new Mesh(boxGeometry, capsuleMaterial)
     box.position.set(0, .8, -.5)
     player.add(box)
    
-    const rPos = new Vector3().randomDirection().multiplyScalar(10);
-    rPos.y = 2;
-    const enemy = new Enemy(rPos);
-    enemy.addToScene(scene);
+    const enemies = []; 
+    for (let i = 0; i < 5; i++) {
+        const rPos = new Vector3().randomDirection().multiplyScalar(20);
+        rPos.y = 1;
+        const enemy = new Enemy(rPos);
+        enemy.addToScene(scene);
+        enemies.push(enemy);
+    }
     
     const enemyBBox = new Box3(new Vector3(-3.25, 0, -3.25), new Vector3(3.25, 0, 3.25));
-    const enemyBBoxH = new Box3Helper(enemyBBox);
-    scene.add(enemyBBoxH);
+    //const enemyBBoxH = new Box3Helper(enemyBBox);
+    //scene.add(enemyBBoxH);
 
     const mouse = new MouseInput(renderer.domElement)
     const keyboard = new KeyboardInput()
     const controller = new PlayerController(player, keyboard, 8)
     const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
     const playerCamera = new PlayerCamera(camera, player, {
-        offset: new Vector3(0, 20, 8),
+        offset: new Vector3(0, 18, 8),
         lookOffset: new Vector3(0, 1, 0),
         smoothing: 10,
         minDistance: 5,
@@ -140,28 +141,54 @@ async function main() {
 
     const timer = new Timer();
     const stats = new Stats();
-    stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
-    document.body.appendChild(stats.dom);
+    //stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
+    //document.body.appendChild(stats.dom);
 
     const floorPosition = new Vector3()
-    const arrows = new ArrowsPool(boxGeometry, boxMaterial, 20)
+    const arrows = new ArrowsPool(boxGeometry, capsuleMaterial, 20)
     scene.add(arrows.mesh)
 
     const markerMaterial = new MeshBasicMaterial({ color: 0x00FF00 });
     const marker = new Mesh(boxGeometry, markerMaterial);
     marker.scale.set(1.5*2, .5, 1.5);
-    scene.add(marker);
+    //scene.add(marker);
 
     const minDistance = 8;
     const maxDistance = 16;
+    
+    const bx = new BoxGeometry();
+    const bm = new MeshBasicMaterial({ color: 0xEE0000 });
+    const explosion = new ParticleSystem(bx, bm, 50, {
+        lifetime: .6,
+        emission: 'sphere',
+        emissionRadius: 0.05,
+        direction: new Vector3(0, 1, 0),
+        spread: 180,
+        speed: 8,
+        speedRandom: 0.5,
+        gravity: new Vector3(0, -10, 0),
+        damping: 0,
+        scale: .35,
+        scaleRandom: 0.4,
+        scaleOverLifetime: [1, 1.5, 0],
+        rotation: 0,
+        rotationRandom: Math.PI,
+        rotationSpeed: 5,
+        rotationSpeedRandom: 0.5,
+        lifetimeRandom: 0.3,
+        emitCount: 30,
+    })
+    const exParent = new Object3D();
+    explosion.addTo(exParent);
+    scene.add(exParent);
 
     renderer.setAnimationLoop(() => {
-        stats.begin();
+        //stats.begin();
         timer.update();
         const delta = timer.getDelta();
         
-        const hits = screenRaycaster.intersect(
-            mouse.x, mouse.y, floor);
+        const hits = screenRaycaster.intersects(
+            mouse.x, mouse.y, floors);
 
         if (hits.length > 0) {
             floorPosition.copy(hits[0].point);
@@ -178,23 +205,28 @@ async function main() {
                 marker.position.normalize().multiplyScalar(maxDistance).add(p);
             }
         }
+       
         
-        /*
-        enemyBBox.setFromObject(enemy.group);
-        for (let arrow of arrows.arrows) {
-            if (enemyBBox.containsPoint(arrow.position)) {
-                console.log("enemy being hit");
-            }
-        }
-        */
-
         arrows.update(delta)
         controller.update(delta, floorPosition)
         playerCamera.update(delta)
-        //enemy.update(player, delta);
+        explosion.update(delta);        
+        
+        for (let enemy of enemies) {
+            if (!enemy.group.visible) continue;
+            enemyBBox.setFromObject(enemy.group);
+            for (let arrow of arrows.arrows) {
+                if (enemyBBox.containsPoint(arrow.position)) {
+                    exParent.position.copy(enemy.group.position);
+                    enemy.group.visible = false;
+                    explosion.emit(30);
+                }
+            }
+            enemy.update(player, delta);
+        }
 
         renderer.render(scene, camera);
-        stats.end();
+        //stats.end();
     });
 
     window.addEventListener('resize', () => {
@@ -206,22 +238,9 @@ async function main() {
     });
 
     renderer.domElement.addEventListener("click", () => {
-        arrows.shoot(player.position, marker.position)     
+        arrows.shoot(player.position, marker.position)
     })
 
-    /*
-    renderer.domElement.addEventListener('pointerdown', (event) => {
-        const hits = screenRaycaster.intersect(
-            event.clientX,
-            event.clientY,
-            [floor]
-        );
-
-        if (hits.length > 0) {
-            player.position.copy(hits[0].point)
-        }
-    });
-    */
 }
 
 main()
