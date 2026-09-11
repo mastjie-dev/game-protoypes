@@ -8,23 +8,28 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
 
+import Signal from './signal.js'
 import MouseInput from './mouse_input.js';
 import KeyboardInput from './keyboard_input.js';
 import PlayerController from './player_controller.js';
 import ScreenRaycaster from './screen_raycaster.js';
 import PlayerCamera from './player_camera.js'
 import ArrowsPool from './arrows_pool.js'
+import Sheeps from './sheeps.js'
 import Enemy from './enemy.js'
 import ParticleSystem from './particles_system.js'
+import CameraShake from './camera_shake.js'
 
 import './style.css'
 
 async function main() {
-    
+    const width = 800;
+    const height = 480;
+
     const scene = new Scene();
     scene.background = new Color(0x87ceeb);
 
-    const aspect = window.innerWidth / window.innerHeight;
+    const aspect = width  / height;
     const camera = new PerspectiveCamera(
         70,
         aspect,
@@ -35,13 +40,8 @@ async function main() {
     camera.lookAt(0, 0, 0)
 
     const renderer = new WebGLRenderer({ antialias: true });
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-    renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 2)
-    );
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = BasicShadowMap;
     document.body.appendChild(renderer.domElement);
@@ -71,6 +71,8 @@ async function main() {
     sun.shadow.camera.bottom = -20;
     scene.add(sun);
 
+    const signal = new Signal();
+    
     const textureLoader = new TextureLoader();
     const uvTexture = textureLoader.load('/uv_texture_bw.png');
 
@@ -123,6 +125,11 @@ async function main() {
         enemies.push(enemy);
     }
     
+    const sheepGeo = new BoxGeometry(1.5, 1.5, 1.5);
+    const sheepMat = new MeshPhongMaterial({ color: 0xeeff33 });
+    const sheeps = new Sheeps(sheepGeo, sheepMat, 20);
+    sheeps.addToScene(scene);
+
     const enemyBBox = new Box3(new Vector3(-3.25, 0, -3.25), new Vector3(3.25, 0, 3.25));
     //const enemyBBoxH = new Box3Helper(enemyBBox);
     //scene.add(enemyBBoxH);
@@ -141,11 +148,11 @@ async function main() {
 
     const timer = new Timer();
     const stats = new Stats();
-    //stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
-    //document.body.appendChild(stats.dom);
+    stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
+    document.body.appendChild(stats.dom);
 
     const floorPosition = new Vector3()
-    const arrows = new ArrowsPool(boxGeometry, capsuleMaterial, 20)
+    const arrows = new ArrowsPool(boxGeometry, capsuleMaterial, 20, signal)
     scene.add(arrows.mesh)
 
     const markerMaterial = new MeshBasicMaterial({ color: 0x00FF00 });
@@ -181,9 +188,11 @@ async function main() {
     const exParent = new Object3D();
     explosion.addTo(exParent);
     scene.add(exParent);
+    
+    const shake = new CameraShake(camera);
 
     renderer.setAnimationLoop(() => {
-        //stats.begin();
+        stats.begin();
         timer.update();
         const delta = timer.getDelta();
         
@@ -206,12 +215,13 @@ async function main() {
             }
         }
        
-        
         arrows.update(delta)
         controller.update(delta, floorPosition)
-        playerCamera.update(delta)
-        explosion.update(delta);        
+        playerCamera.update(delta);
+        shake.update(delta);
+        //explosion.update(delta);        
         
+        /*
         for (let enemy of enemies) {
             if (!enemy.group.visible) continue;
             enemyBBox.setFromObject(enemy.group);
@@ -224,9 +234,14 @@ async function main() {
             }
             enemy.update(player, delta);
         }
+        */
 
         renderer.render(scene, camera);
-        //stats.end();
+        stats.end();
+    });
+
+    signal.register("hit-floor", () => {
+        shake.shake(.3, .7);
     });
 
     window.addEventListener('resize', () => {

@@ -3,9 +3,10 @@ import {
 } from 'three'
 
 export default class ArrowsPool {
-	constructor(geometry, material, count) {
+	constructor(geometry, material, count, signal) {
 		this.count = count;
 		this.index = 0;
+        this.signal = signal;
 
 		this.mesh = new InstancedMesh(
 			geometry,
@@ -67,7 +68,7 @@ export default class ArrowsPool {
         arrow.active = true;
 
         const t = (arrow.distance - 8) / 16; // TODO: remove hardcoded
-        arrow.flightTime = MathUtils.lerp(.5, .65, t);
+        arrow.flightTime = MathUtils.lerp(.65, .85, t);
         
 		this.index++;
 	}
@@ -93,6 +94,7 @@ export default class ArrowsPool {
             };
             if (arrow.position.y < -1) {
                 this.clear(arrow);
+                this.signal.emit('hit-floor');
                 i++;
                 continue;
             }
