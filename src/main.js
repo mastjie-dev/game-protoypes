@@ -18,7 +18,9 @@ import { Player, PlayerController, PlayerCamera } from './player.js';
 import { Enemies } from './enemy.js'
 import Floor from './floor.js'
 import ArcProjectiles from './arc_projectiles.js'
+import TargetMarker from './target_marker.js'
 import ParticleSystem from './particles_system.js'
+
 
 import './style.css'
 
@@ -71,15 +73,16 @@ async function main() {
     const player = new Player();
     player.addToScene(scene);
 
-    const enemies = new Enemies(new BoxGeometry(), new MeshPhongMaterial(),
-        10, player.mesh)
-    enemies.spawn();
+    const targetMarker = new TargetMarker(8, 16);
+    targetMarker.addToScene(scene);
+    const enemies = new Enemies(new BoxGeometry(), 
+        new MeshPhongMaterial({ color: 0xFF0000 }), 10, player.mesh)
     enemies.addToScene(scene);
 
     const mouse = new MouseInput(renderer.domElement)
     const keyboard = new KeyboardInput()
     const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
-    const controller = new PlayerController(player.mesh, keyboard, 8)
+    const playerController = new PlayerController(player.mesh, keyboard, 8)
     const playerCamera = new PlayerCamera(camera, player.mesh, {
         offset: new Vector3(0, 18, 8),
         lookOffset: new Vector3(0, 1, 0),
@@ -95,13 +98,9 @@ async function main() {
 
     /* 
        TODO:
-       - target marker (distance based target)
        - particles manager??        
     */
 
-    const minDistance = 8;
-    const maxDistance = 16;
-    
     const bx = new BoxGeometry();
     const bm = new MeshBasicMaterial({ color: 0xEE0000 });
     const explosion = new ParticleSystem(bx, bm, 50, {
@@ -129,6 +128,7 @@ async function main() {
     scene.add(exParent);
     
     const shake = new CameraShake(camera);
+    const raycastPosition = new Vector3();
 
     renderer.setAnimationLoop(() => {
         stats.begin();
@@ -137,12 +137,16 @@ async function main() {
         
         const hits = screenRaycaster.intersects(
             mouse.x, mouse.y, floor.mesh.children);
+        if (hits.length) {
+            raycastPosition.copy(hits[0].point);
+        }
                
         //arrows.update(delta)
-        //controller.update(delta, floorPosition)
-        //enemies.update(delta);
+        playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
-        shake.update(delta);
+        targetMarker.update(player.mesh.position, raycastPosition);
+        //enemies.update(delta);
+        //shake.update(delta);
         //explosion.update(delta);        
         
         renderer.render(scene, camera);

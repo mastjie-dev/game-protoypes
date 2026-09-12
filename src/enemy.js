@@ -1,10 +1,10 @@
 import {
-    Vector3, Object3D, DynamicDrawUsage, InstancedMesh, 
+    Vector3, Object3D, DynamicDrawUsage, InstancedMesh, MathUtils, 
 } from 'three';
 
 export class Enemy {
     constructor() {
-        this.isAlive = true;
+        this.isAlive = false;
         this.health = 100;
         this.position = new Vector3();
         this.speed = 5;
@@ -25,6 +25,9 @@ export class Enemy {
 export class Enemies {
     constructor(geometry, material, count, target) {
         this.target = target;
+        this.count = count;
+        this.spawnTimer = 3; // in seconds
+        this.timer = 0;
 
         this.mesh = new InstancedMesh(geometry, material, count);
         this.mesh.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -33,6 +36,7 @@ export class Enemies {
         this.dummy = new Object3D();
         this.shell = new Object3D();
     
+        this.index = 0;
         this.enemies = [];
         for (let i = 0; i < count; i++) {
             this.enemies.push(new Enemy());
@@ -43,11 +47,15 @@ export class Enemies {
         scene.add(this.mesh);
     }
 
-    spawn() {
-        for (let enemy of this.enemies) {
-            enemy.position.randomDirection().multiplyScalar(20);
-            enemy.position.y = 0.;
-        }    
+    radiusSpawn(minRadius, maxRadius) {
+        const radius = MathUtils.lerp(minRadius, maxRadius, Math.random());
+        this.enemies[this.index].position
+            .set((Math.random() - .5) * 2, 0, (Math.random() - .5) * 2)
+            .multiplyScalar(radius);
+        this.enemies[this.index].isAlive = true;
+        this.index++;
+
+        if (this.index === (this.count - 1)) this.index = 0;
     }
 
     update(delta) {
@@ -76,6 +84,12 @@ export class Enemies {
 
             this.mesh.instanceMatrix.needsUpdate = true;
             i++;
+        }
+
+        this.timer += delta;
+        if (this.timer > this.spawnTimer) {
+            this.timer = 0;
+            this.radiusSpawn(20, 25);
         }
     }
 

@@ -42,7 +42,6 @@ export class PlayerController {
 
         this.object.rotation.y = Math.atan2(direction.x, direction.z);
 
-
 		if (this.keyboard.isDown('KeyA')) {
 			x -= 1;
 		}
@@ -62,12 +61,7 @@ export class PlayerController {
 		if (x === 0 && z === 0) return;
 
         this.direction.set(x, 0, z);
-        /*
-		if (this.direction.lengthSq() === 0) {
-			return;
-		}
-        */
-
+        
 		this.direction.normalize();
 		this.direction.multiplyScalar(this.speed * delta);
 		this.object.position.add(this.direction);
