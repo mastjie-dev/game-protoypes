@@ -1,37 +1,85 @@
-import * as THREE from 'three';
+import {
+    Vector3, Object3D, DynamicDrawUsage, InstancedMesh, 
+} from 'three';
 
-export default class Enemy {
-    constructor(position = new THREE.Vector3()) {
-        this.group = new THREE.Object3D();
-        this.group.position.copy(position);
-
-        // --- Body ---
-        const material = new THREE.MeshPhongMaterial({
-            color: 0xff4444
-        });
-
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        geometry.computeBoundingBox();
-
-        this.body = new THREE.Mesh(geometry, material);
-        this.body.scale.multiplyScalar(1.5);
-        this.body.castShadow = true;
-        this.group.add(this.body);
-
+export class Enemy {
+    constructor() {
+        this.isAlive = true;
+        this.health = 100;
+        this.position = new Vector3();
+        this.speed = 5;
+        
         // Animation settings
         this.speed = 2;
         this.hopHeight = 0.4;
         this.hopSpeed = 8;
         this.yOffset = 1.25;
-
         this.time = Math.random() * Math.PI * 2;
     }
 
-    addToScene(scene) {
-        scene.add(this.group);
+    update(delta) {
+
+    }
+}
+
+export class Enemies {
+    constructor(geometry, material, count, target) {
+        this.target = target;
+
+        this.mesh = new InstancedMesh(geometry, material, count);
+        this.mesh.instanceMatrix.setUsage(DynamicDrawUsage);
+        this.mesh.castShadow = true;
+
+        this.dummy = new Object3D();
+        this.shell = new Object3D();
+    
+        this.enemies = [];
+        for (let i = 0; i < count; i++) {
+            this.enemies.push(new Enemy());
+        }
     }
 
-    update(player, delta) {
+    addToScene(scene) {
+        scene.add(this.mesh);
+    }
+
+    spawn() {
+        for (let enemy of this.enemies) {
+            enemy.position.randomDirection().multiplyScalar(20);
+            enemy.position.y = 0.;
+        }    
+    }
+
+    update(delta) {
+        let i = 0;
+        for (let enemy of this.enemies) {
+            if (!enemy.isAlive) {
+                i++;
+                continue;
+            }
+            enemy.update(delta);
+            
+            const diff = this.target.position.clone().sub(enemy.position);
+            const distance = Math.sqrt(diff.x * diff.x + diff.y * diff.y
+                + diff.z * diff.z);
+
+            if (distance > 1.5) {
+                const direction = diff.divideScalar(distance);
+                const velocity = direction.multiplyScalar(enemy.speed * delta);
+                enemy.position.add(velocity);
+                this.dummy.position.copy(enemy.position);
+                this.dummy.rotation.y = Math.atan2(direction.x, direction.z);
+                this.dummy.updateMatrixWorld();
+
+                this.mesh.setMatrixAt(i, this.dummy.matrixWorld);
+            }
+
+            this.mesh.instanceMatrix.needsUpdate = true;
+            i++;
+        }
+    }
+
+    update2(player, delta) {
         this.time += delta;
 
         // ----------------
