@@ -5,7 +5,8 @@ import {
 import Healthbar from './healthbar.js'
 
 export default class NPC {
-    constructor() {
+    constructor(signal) {
+        this.signal = signal;
         this.health = 100;
 
         const geometry = new BoxGeometry(2, 2, 2);
@@ -23,6 +24,15 @@ export default class NPC {
     }
 
     takeDamage(amount) {
+        if (this.health === 0) {
+            this.signal.emit("npc-dead");
+            return;
+        }
+
         this.health = Math.max(0, this.health - amount);
+    }
+
+    get position() {
+        return this.mesh.position;
     }
 }

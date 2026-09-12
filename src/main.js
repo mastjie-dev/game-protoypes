@@ -24,6 +24,20 @@ import ParticleSystem from './particles_system.js'
 
 import './style.css'
 
+/* 
+   TODO:
+   - particles manager
+    - on projectiles hit
+    - on enemies die
+    - etc...
+   - reactive healthbar
+   - design
+    - floor
+    - enemies & npc
+   - animations
+   - audios
+*/
+
 async function main() {
     const width = 800;
     const height = 480;
@@ -76,11 +90,11 @@ async function main() {
     const targetMarker = new TargetMarker(8, 16);
     targetMarker.addToScene(scene);
     
-    const npc = new NPC();
+    const npc = new NPC(signal);
     npc.addToScene(scene);
 
     const enemies = new Enemies(new BoxGeometry(), 
-        new MeshPhongMaterial({ color: 0xFF0000 }), 10, player.mesh)
+        new MeshPhongMaterial({ color: 0xFF0000 }), 10, npc)
     enemies.addToScene(scene);
 
     const mouse = new MouseInput(renderer.domElement)
@@ -100,11 +114,7 @@ async function main() {
     stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
     document.body.appendChild(stats.dom);
 
-    /* 
-       TODO:
-       - particles manager??        
-    */
-
+    
     const bx = new BoxGeometry();
     const bm = new MeshBasicMaterial({ color: 0xEE0000 });
     const explosion = new ParticleSystem(bx, bm, 50, {
@@ -149,7 +159,7 @@ async function main() {
         playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
         targetMarker.update(player.mesh.position, raycastPosition);
-        //enemies.update(delta);
+        enemies.update(delta);
         //shake.update(delta);
         //explosion.update(delta);        
         
@@ -160,6 +170,9 @@ async function main() {
     signal.register("hit-floor", () => {
         shake.shake(.3, .7);
     });
+    signal.register("npc-dead", () => {
+        console.log("game over, show menu, yada yada yada...");
+    })
 
     window.addEventListener('resize', () => {
           camera.aspect =

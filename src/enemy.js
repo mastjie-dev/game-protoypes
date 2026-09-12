@@ -2,23 +2,29 @@ import {
     Vector3, Object3D, DynamicDrawUsage, InstancedMesh, MathUtils, 
 } from 'three';
 
+const STATE = {
+    SEEK: 1,
+    ATTACK: 2,
+};
+
 export class Enemy {
     constructor() {
+        
         this.isAlive = false;
         this.health = 100;
         this.position = new Vector3();
         this.speed = 5;
-        
+
+        this.attackPower = 15;
+        this.attackFrequency = 1.5;
+        this.attackTimer = 0;
+
         // Animation settings
         this.speed = 2;
         this.hopHeight = 0.4;
         this.hopSpeed = 8;
         this.yOffset = 1.25;
         this.time = Math.random() * Math.PI * 2;
-    }
-
-    update(delta) {
-
     }
 }
 
@@ -39,7 +45,7 @@ export class Enemies {
         this.index = 0;
         this.enemies = [];
         for (let i = 0; i < count; i++) {
-            this.enemies.push(new Enemy());
+            this.enemies.push(new Enemy(target));
         }
     }
 
@@ -65,26 +71,32 @@ export class Enemies {
                 i++;
                 continue;
             }
-            enemy.update(delta);
             
             const diff = this.target.position.clone().sub(enemy.position);
             const distance = Math.sqrt(diff.x * diff.x + diff.y * diff.y
                 + diff.z * diff.z);
-
-            if (distance > 1.5) {
+            
+            if (distance < 1.5) {
+                if (enemy.attackTimer > enemy.attackFrequency) {
+                    enemy.attackTimer = 0;
+                    this.target.takeDamage(enemy.attackPower);
+                }
+            }
+            else {
                 const direction = diff.divideScalar(distance);
                 const velocity = direction.multiplyScalar(enemy.speed * delta);
                 enemy.position.add(velocity);
+                
                 this.dummy.position.copy(enemy.position);
                 this.dummy.rotation.y = Math.atan2(direction.x, direction.z);
                 this.dummy.updateMatrixWorld();
-
                 this.mesh.setMatrixAt(i, this.dummy.matrixWorld);
             }
-
-            this.mesh.instanceMatrix.needsUpdate = true;
+            
+            enemy.attackTimer += delta;
             i++;
         }
+        this.mesh.instanceMatrix.needsUpdate = true;
 
         this.timer += delta;
         if (this.timer > this.spawnTimer) {
@@ -140,10 +152,6 @@ export class Enemies {
 
         this.group.rotation.z =
             Math.sin(this.time * this.hopSpeed) * 0.12;
-    }
-
-    get position() {
-        return this.group.position;
     }
 }
 
