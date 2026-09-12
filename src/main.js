@@ -16,11 +16,11 @@ import CameraShake from './camera_shake.js'
 
 import { Player, PlayerController, PlayerCamera } from './player.js';
 import { Enemies } from './enemy.js'
+import NPC from './npc.js'
 import Floor from './floor.js'
 import ArcProjectiles from './arc_projectiles.js'
 import TargetMarker from './target_marker.js'
 import ParticleSystem from './particles_system.js'
-
 
 import './style.css'
 
@@ -75,6 +75,10 @@ async function main() {
 
     const targetMarker = new TargetMarker(8, 16);
     targetMarker.addToScene(scene);
+    
+    const npc = new NPC();
+    npc.addToScene(scene);
+
     const enemies = new Enemies(new BoxGeometry(), 
         new MeshPhongMaterial({ color: 0xFF0000 }), 10, player.mesh)
     enemies.addToScene(scene);

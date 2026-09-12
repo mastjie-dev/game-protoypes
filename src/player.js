@@ -2,6 +2,8 @@ import {
     Vector3, CapsuleGeometry, MeshPhongMaterial, Mesh, BoxGeometry,
 } from 'three';
 
+import Healthbar from './healthbar.js'
+
 export class Player {
     constructor() {
         const geometry = new CapsuleGeometry(0.5, 1.5, 8, 16);
@@ -15,6 +17,9 @@ export class Player {
         const box = new Mesh(boxGeometry, material)
         box.position.set(0, .8, -.5)
         this.mesh.add(box)
+
+        this.healthbar = new Healthbar(2.5);
+        this.healthbar.addToParent(this.mesh);
     }
 
     addToScene(scene) {
