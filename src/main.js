@@ -17,6 +17,8 @@ import CameraShake from './camera_shake.js'
 import { Player, PlayerController, PlayerCamera } from './player.js';
 import { Enemies } from './enemy.js'
 import NPC from './npc.js'
+import { Parts } from './collectible.js'
+import Consumables from './consumables.js'
 import Floor from './floor.js'
 import ArcProjectiles from './arc_projectiles.js'
 import TargetMarker from './target_marker.js'
@@ -26,6 +28,8 @@ import './style.css'
 
 /* 
    TODO:
+   - collectibles
+   - consumables
    - particles manager
     - on projectiles hit
     - on enemies die
@@ -97,6 +101,9 @@ async function main() {
         new MeshPhongMaterial({ color: 0xFF0000 }), 10, npc)
     enemies.addToScene(scene);
 
+    const parts = new Consumables(new BoxGeometry(), new MeshPhongMaterial({ color: 0xEE22EE }));
+    parts.addToScene(scene);
+
     const mouse = new MouseInput(renderer.domElement)
     const keyboard = new KeyboardInput()
     const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
@@ -113,7 +120,6 @@ async function main() {
     const stats = new Stats();
     stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
     document.body.appendChild(stats.dom);
-
     
     const bx = new BoxGeometry();
     const bm = new MeshBasicMaterial({ color: 0xEE0000 });
@@ -148,18 +154,20 @@ async function main() {
         stats.begin();
         timer.update();
         const delta = timer.getDelta();
-        
+     
         const hits = screenRaycaster.intersects(
             mouse.x, mouse.y, floor.mesh.children);
         if (hits.length) {
             raycastPosition.copy(hits[0].point);
         }
-               
+    
+        parts.update(delta, player.mesh.position);
+
         //arrows.update(delta)
         playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
         targetMarker.update(player.mesh.position, raycastPosition);
-        enemies.update(delta);
+        //enemies.update(delta);
         //shake.update(delta);
         //explosion.update(delta);        
         
@@ -182,8 +190,13 @@ async function main() {
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
 
-    renderer.domElement.addEventListener("click", () => {
+    renderer.domElement.addEventListener("click", e => {
         //arrows.shoot(player.position, marker.position)
+        e.preventDefault();
+    })
+
+    renderer.domElement.addEventListener("contextmenu", e => {
+        e.preventDefault();
     })
 }
 

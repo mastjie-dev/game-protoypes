@@ -4,26 +4,43 @@ import {
 
 import Healthbar from './healthbar.js'
 
+const STATE = {
+    ATTACK: 1,
+    CARRY: 2,
+};
+
 export class Player {
     constructor() {
         const geometry = new CapsuleGeometry(0.5, 1.5, 8, 16);
+        geometry.translate(0, 1.5, 0);
         const material = new MeshPhongMaterial({ color: 0x22EE41 })
         
         this.mesh = new Mesh(geometry, material);
-        this.mesh.position.y = 1.25;
         this.mesh.castShadow = true;
         
         const boxGeometry = new BoxGeometry(.4, .4, 1);
         const box = new Mesh(boxGeometry, material)
-        box.position.set(0, .8, -.5)
+        box.position.set(0, 2, -.5)
         this.mesh.add(box)
 
-        this.healthbar = new Healthbar(2.5);
-        this.healthbar.addToParent(this.mesh);
+        //this.healthbar = new Healthbar(2.5);
+        //this.healthbar.addToParent(this.mesh);
+
+        this.state = STATE.ATTACK;
     }
 
     addToScene(scene) {
         scene.add(this.mesh);
+    }
+
+    pickItem(item) {
+        this.item = item;
+        this.state = STATE.CARRY;
+    }
+
+    dropItem() {
+        this.state = STATE.ATTACK;
+        return this.item;
     }
 }
 
