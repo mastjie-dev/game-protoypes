@@ -15,8 +15,8 @@ import ScreenRaycaster from './screen_raycaster.js';
 import CameraShake from './camera_shake.js'
 
 import { Player, PlayerController, PlayerCamera } from './player.js';
-import { Enemies } from './enemy.js'
-import NPC from './npc.js'
+import { Pawns } from './enemy.js'
+import { Checkpoint, NPC } from './npc.js'
 import { Parts } from './collectible.js'
 import Consumables from './consumables.js'
 import Floor from './floor.js'
@@ -45,6 +45,16 @@ import './style.css'
 async function main() {
     const width = 800;
     const height = 480;
+    
+    const renderer = new WebGLRenderer({ antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = BasicShadowMap;
+    document.body.appendChild(renderer.domElement);
+    
+    const mouse = new MouseInput(renderer.domElement)
+    const keyboard = new KeyboardInput()
 
     const scene = new Scene();
     scene.background = new Color(0x87ceeb);
@@ -54,12 +64,6 @@ async function main() {
     camera.position.set(0, 10, 8);
     camera.lookAt(0, 0, 0)
 
-    const renderer = new WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = BasicShadowMap;
-    document.body.appendChild(renderer.domElement);
   
     /*
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -89,24 +93,9 @@ async function main() {
     floor.addToScene(scene);
 
     const player = new Player();
+    player.mesh.position.set(-3, 0, 28);
     player.addToScene(scene);
-
-    const targetMarker = new TargetMarker(8, 16);
-    targetMarker.addToScene(scene);
     
-    const npc = new NPC(signal);
-    npc.addToScene(scene);
-
-    const enemies = new Enemies(new BoxGeometry(), 
-        new MeshPhongMaterial({ color: 0xFF0000 }), 10, npc)
-    enemies.addToScene(scene);
-
-    const parts = new Consumables(new BoxGeometry(), new MeshPhongMaterial({ color: 0xEE22EE }));
-    parts.addToScene(scene);
-
-    const mouse = new MouseInput(renderer.domElement)
-    const keyboard = new KeyboardInput()
-    const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
     const playerController = new PlayerController(player.mesh, keyboard, 8)
     const playerCamera = new PlayerCamera(camera, player.mesh, {
         offset: new Vector3(0, 18, 8),
@@ -116,11 +105,30 @@ async function main() {
         maxDistance: 30
     });
 
-    const timer = new Timer();
-    const stats = new Stats();
-    stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
-    document.body.appendChild(stats.dom);
+    const targetMarker = new TargetMarker(8, 16);
+    targetMarker.addToScene(scene);
+   
+    const checkpoint = new Checkpoint();
+    checkpoint.addToScene(scene);
+
+    const npc = new NPC(signal, checkpoint);
+    npc.mesh.position.set(0, 0, 26);
+    npc.addToScene(scene);
     
+    const pawns = new Pawns(new BoxGeometry(), 
+        new MeshPhongMaterial({ color: 0xFF0000 }), 12, new Vector3())
+    pawns.addToScene(scene);
+    pawns.spawn();
+    pawns.update(.016);
+
+    const arrows = new ArcProjectiles(new BoxGeometry(.2, 1, .2),
+        new MeshBasicMaterial({color: 0x0055EE}), 32, signal); 
+    arrows.addToScene(scene);
+
+    /*
+    const parts = new Consumables(new BoxGeometry(), new MeshPhongMaterial({ color: 0xEE22EE }));
+    parts.addToScene(scene);
+
     const bx = new BoxGeometry();
     const bm = new MeshBasicMaterial({ color: 0xEE0000 });
     const explosion = new ParticleSystem(bx, bm, 50, {
@@ -146,9 +154,15 @@ async function main() {
     const exParent = new Object3D();
     explosion.addTo(exParent);
     scene.add(exParent);
+    */
     
+    const screenRaycaster = new ScreenRaycaster(camera, renderer.domElement);
     const shake = new CameraShake(camera);
     const raycastPosition = new Vector3();
+    const timer = new Timer();
+    const stats = new Stats();
+    stats.showPanel(0); // 0 = FPS, 1 = ms, 2 = memory
+    document.body.appendChild(stats.dom);
 
     renderer.setAnimationLoop(() => {
         stats.begin();
@@ -161,15 +175,16 @@ async function main() {
             raycastPosition.copy(hits[0].point);
         }
     
-        parts.update(delta, player.mesh.position);
-
-        //arrows.update(delta)
         playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
         targetMarker.update(player.mesh.position, raycastPosition);
+        npc.update(delta); 
+        arrows.update(delta)
+        arrows.checkCollision(floor.hitbox, pawns.pawns);
         //enemies.update(delta);
         //shake.update(delta);
         //explosion.update(delta);        
+        //parts.update(delta, player.mesh.position);
         
         renderer.render(scene, camera);
         stats.end();
@@ -181,6 +196,14 @@ async function main() {
     signal.register("npc-dead", () => {
         console.log("game over, show menu, yada yada yada...");
     })
+    signal.register("start-phase-01", () => {
+        
+    })
+    signal.register("arrow-hit-floor", position => {
+        /*
+            show particles, check if enemies nearby
+        */
+    })
 
     window.addEventListener('resize', () => {
           camera.aspect =
@@ -191,8 +214,8 @@ async function main() {
     });
 
     renderer.domElement.addEventListener("click", e => {
-        //arrows.shoot(player.position, marker.position)
         e.preventDefault();
+        arrows.shoot(player.mesh.position, targetMarker.mesh.position)
     })
 
     renderer.domElement.addEventListener("contextmenu", e => {

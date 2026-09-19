@@ -17,7 +17,7 @@ export default class ArcProjectiles {
 		this.speed = 5;
 		this.gravity = 9.81;
 
-        this.dummy.position.y = -2;
+        this.dummy.position.y = -5;
         this.dummy.updateMatrix();
         for (let i = 0; i < count; i++) {
             this.mesh.setMatrixAt(i, this.dummy.matrix);
@@ -30,6 +30,7 @@ export default class ArcProjectiles {
                 position: new Vector3(),
                 start: new Vector3(),
                 target: new Vector3(),
+                direction: new Vector3(),
                 distance: 0,
                 elapsed: 0,
                 flightTime: 0,
@@ -38,68 +39,70 @@ export default class ArcProjectiles {
 		}
 	}
 
-    // DELETE ??
-    _calculateBallisticVelocity(start, target, flightTime) {
-        const velocity = new Vector3();
-
-        velocity.x = (target.x - start.x) / flightTime;
-        velocity.z = (target.z - start.z) / flightTime;
-        velocity.y =
-            (target.y - start.y + 0.5 * this.gravity * flightTime * flightTime)
-            / flightTime;
-
-        return velocity;
-    }
-    
 	shoot(position, target) {
 		if (this.index === this.count) {
 			this.index = 0;
 		}
         
         const arrow = this.projectiles[this.index];
-        arrow.start.copy(position);
+        arrow.start.copy(position).add(this.offset);
         arrow.target.copy(target);
         arrow.distance = position.distanceTo(target);
         arrow.active = true;
 
         const t = (arrow.distance - 8) / 16; // TODO: remove hardcoded
         arrow.flightTime = MathUtils.lerp(.65, .85, t);
-        
 		this.index++;
 	}
 
-    // for stylized effect, xz lerp(start, target, t)
     _getTrajectoryPosition(arrow, t, position, curveAmount = 0.35) {
         const { start, target, distance } = arrow;
         const x = MathUtils.lerp(start.x, target.x, t);
         const z = MathUtils.lerp(start.z, target.z, t);
-
-        const arc = Math.sin(Math.PI * t) * distance * curveAmount;
+        const y = Math.sin(Math.PI * t) * distance * curveAmount;
         position.set(x, y, z);
     }
 
-	update(deltaTime) {
+    addToScene(scene) {
+        scene.add(this.mesh);
+    }
+
+    checkCollision(floor, enemies) {
+        for (let arrow of this.projectiles) {
+            if (!arrow.active) continue;
+
+            const head = arrow.direction.clone().multiplyScalar(.5)
+                .add(arrow.position);
+            if (floor.containsPoint(head)) {
+                this.signal.emit("arrow-hit-floor", head);
+                this.clear(arrow); 
+                continue;
+            }
+            for (let enemy of enemies) {
+                if (enemy.box.containsPoint(head)) {
+                    this.clear(arrow); 
+                    console.log("emit arrow hit enemy");
+                }
+            }
+        }        
+    }
+	
+    update(deltaTime) {
 	    let i = 0;
         for (let arrow of this.projectiles) {
             if (!arrow.active) {
                 i++;
                 continue;
             };
-            if (arrow.position.y < -1) {
-                this.clear(arrow);
-                this.signal.emit('hit-floor');
-                i++;
-                continue;
-            }
-
+            
             const t = arrow.elapsed / arrow.flightTime;
             this._getTrajectoryPosition(arrow, t, arrow.position);
-            const direction = arrow.target.clone().sub(V).normalize();
+            arrow.direction.copy(arrow.target).sub(arrow.position).normalize();
             arrow.elapsed += deltaTime;
 
             this.dummy.position.copy(arrow.position);
 			this.dummy.quaternion.setFromUnitVectors(
-				new Vector3(0, 0, 1), direction);
+				new Vector3(0, 0, 1), arrow.direction);
 			this.dummy.updateMatrix();
 			this.mesh.setMatrixAt(i, this.dummy.matrix);
             i++;
@@ -111,9 +114,9 @@ export default class ArcProjectiles {
         projectile.active = false;
         projectile.elapsed = 0;
         projectile.flightTime = 0;
-        projectile.position.set(0, 0, 0);
-        projectile.start.set(0, 0, 0);
-        projectile.target.set(0, 0, 0);
+        projectile.position.set(0, -5, 0);
+        //projectile.start.set(0, 0, 0);
+        //projectile.target.set(0, 0, 0);
     }
 
 	reset() {

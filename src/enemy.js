@@ -1,5 +1,6 @@
 import {
     Vector3, Object3D, DynamicDrawUsage, InstancedMesh, MathUtils, 
+    Box3,
 } from 'three';
 
 const STATE = {
@@ -7,17 +8,24 @@ const STATE = {
     ATTACK: 2,
 };
 
+const PAWN_BOX_SIZE = new Vector3(1.2, 2.4, 1.2);
+
 export class Enemy {
     constructor() {
-        
         this.isAlive = false;
         this.health = 100;
         this.position = new Vector3();
+        this.direction = new Vector3();
         this.speed = 5;
 
         this.attackPower = 15;
-        this.attackFrequency = 1.5;
+        this.attackInterval = 1.5;
         this.attackTimer = 0;
+        this.invulnerable = true;
+        this.invulnerableTimer = 3;
+
+        this.state = STATE.SEEK;
+        this.box = new Box3();
 
         // Animation settings
         this.speed = 2;
@@ -26,14 +34,52 @@ export class Enemy {
         this.yOffset = 1.25;
         this.time = Math.random() * Math.PI * 2;
     }
+
+    spawn(position) {
+        this.position.copy(position);
+        this.isAlive = true;
+        this.health = 100;
+        this.invulnerable = true;
+        this.invulnerableTimer = 3;
+        this.state = STATE.SEEK;
+        this.attackTimer = 0;
+        this.box.setFromCenterAndSize(this.position, PAWN_BOX_SIZE);
+    }
+
+    update(delta, target) {
+        if (this.state === STATE.SEEK) {
+            const distance = this.position.distanceTo(target);
+            if (distance < 1.5) {
+                this.state = STATE.ATTACK;
+                return;
+            }
+            
+            this.direction.copy(target).sub(this.position);
+            const velocity = this.direction.clone().multiplyScalar(this.speed * delta);
+            this.position.add(velocity);
+            this.box.setFromCenterAndSize(this.position, PAWN_BOX_SIZE);
+        }
+        else {
+            this.attackTimer++;
+            if (this.attackTimer > this.attackInterval) {
+                this.attackTimer = 0;
+                target.takeDamage(this.attackPower);
+            }
+        }
+
+        this.invulnerableTimer -= delta;
+        if (this.invulnerableTimer < 0) {
+            this.invulnerable = false;
+        }
+    }
 }
 
-export class Enemies {
+export class Pawns {
     constructor(geometry, material, count, target) {
         this.target = target;
         this.count = count;
-        this.spawnTimer = 3; // in seconds
-        this.timer = 0;
+        this.spawnTimer = 0; 
+        this.spawnInterval = 5;
 
         this.mesh = new InstancedMesh(geometry, material, count);
         this.mesh.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -41,68 +87,79 @@ export class Enemies {
 
         this.dummy = new Object3D();
         this.shell = new Object3D();
-    
+
+        this.isSpawning = !false;
         this.index = 0;
-        this.enemies = [];
+        this.pawns = [];
+        this.points = [];
         for (let i = 0; i < count; i++) {
-            this.enemies.push(new Enemy(target));
+            this.pawns.push(new Enemy(target));
+            this.points.push(i);
         }
     }
 
     addToScene(scene) {
         scene.add(this.mesh);
     }
+    
+    _shuffle(array) {
+        let currentIndex = array.length;
+        while (currentIndex != 0) {
+            let randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
 
-    radiusSpawn(minRadius, maxRadius) {
-        const radius = MathUtils.lerp(minRadius, maxRadius, Math.random());
-        this.enemies[this.index].position
-            .set((Math.random() - .5) * 2, 0, (Math.random() - .5) * 2)
-            .multiplyScalar(radius);
-        this.enemies[this.index].isAlive = true;
-        this.index++;
+            [array[currentIndex], array[randomIndex]] = [
+              array[randomIndex], array[currentIndex]];
+        }
+    }
 
-        if (this.index === (this.count - 1)) this.index = 0;
+    startSpawn() {}
+
+    pauseSpawn() {}
+
+    spawn(delta) {
+        if (!this.isSpawning) return;
+        this.spawnTimer += delta;
+        if (this.spawnTimer < this.spawnInterval) return;
+        this.spawnTimer = 0;
+
+        const points = [...this.points];
+        this._shuffle(points);
+
+        const step = (Math.PI * 2) / this.count;
+        for (let i = 0; i < 3; i++) {
+            const radian = points.pop() * step;
+            this.dummy.position.x = Math.cos(radian) * 28;
+            this.dummy.position.z = Math.sin(radian) * 28;
+            this.dummy.updateMatrixWorld();
+            this.mesh.setMatrixAt(i, this.dummy.matrixWorld);
+            this.pawns[this.index].spawn(this.dummy.position);
+            this.index++;
+        }
+        this.mesh.instanceMatrix.needsUpdate = true;
+        if (this.index >= this.count) {
+            this.index = 0;
+        }
     }
 
     update(delta) {
         let i = 0;
-        for (let enemy of this.enemies) {
+        for (let enemy of this.pawns) {
             if (!enemy.isAlive) {
                 i++;
                 continue;
             }
             
-            const diff = this.target.position.clone().sub(enemy.position);
-            const distance = Math.sqrt(diff.x * diff.x + diff.y * diff.y
-                + diff.z * diff.z);
-            
-            if (distance < 1.5) {
-                if (enemy.attackTimer > enemy.attackFrequency) {
-                    enemy.attackTimer = 0;
-                    this.target.takeDamage(enemy.attackPower);
-                }
-            }
-            else {
-                const direction = diff.divideScalar(distance);
-                const velocity = direction.multiplyScalar(enemy.speed * delta);
-                enemy.position.add(velocity);
-                
+            enemy.update(delta , this.target);
+            if (enemy.state === STATE.SEEK) {
                 this.dummy.position.copy(enemy.position);
-                this.dummy.rotation.y = Math.atan2(direction.x, direction.z);
+                this.dummy.rotation.y = Math.atan2(enemy.direction.x, enemy.direction.z);
                 this.dummy.updateMatrixWorld();
                 this.mesh.setMatrixAt(i, this.dummy.matrixWorld);
             }
-            
-            enemy.attackTimer += delta;
             i++;
         }
         this.mesh.instanceMatrix.needsUpdate = true;
-
-        this.timer += delta;
-        if (this.timer > this.spawnTimer) {
-            this.timer = 0;
-            this.radiusSpawn(20, 25);
-        }
     }
 
     update2(player, delta) {

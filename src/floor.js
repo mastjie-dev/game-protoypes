@@ -1,12 +1,12 @@
 import {
-    PlaneGeometry, MeshPhongMaterial, Mesh, Group,
+    PlaneGeometry, MeshPhongMaterial, Mesh, Group, Box3, Vector3,
 } from 'three'
 
 export default class Floor {
     constructor(texture) {
         const floorGeometry = new PlaneGeometry(20, 20);
         const floorMaterial = new MeshPhongMaterial({ map: texture });
-        
+
         this.mesh = new Group();
 
         for (let y = -20; y <= 20; y+=20) {
@@ -21,6 +21,8 @@ export default class Floor {
                 this.mesh.add(floor);
             }
         }
+
+        this.hitbox = new Box3(new Vector3(-30, -2, -30), new Vector3(30, 0, 30));
     }
 
     addToScene(scene) {
