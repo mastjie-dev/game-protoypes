@@ -3,7 +3,7 @@ import {
     DirectionalLight, AmbientLight, Timer, CapsuleGeometry, PlaneGeometry,
     PCFShadowMap, Mesh, TextureLoader, Vector3, SphereGeometry,
     MeshBasicMaterial, BoxGeometry, Box3, Box3Helper, Object3D,
-    MeshPhongMaterial, BasicShadowMap,
+    MeshPhongMaterial, BasicShadowMap, MathUtils,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
@@ -15,7 +15,7 @@ import ScreenRaycaster from './screen_raycaster.js';
 import CameraShake from './camera_shake.js'
 
 import { Player, PlayerController, PlayerCamera } from './player.js';
-import { Pawns } from './enemy.js'
+import { PawnManager } from './pawn.js'
 import { Checkpoint, NPC } from './npc.js'
 import { Parts } from './collectible.js'
 import Consumables from './consumables.js'
@@ -63,7 +63,6 @@ async function main() {
     const camera = new PerspectiveCamera(70, aspect, 0.1,200);
     camera.position.set(0, 10, 8);
     camera.lookAt(0, 0, 0)
-
   
     /*
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -109,17 +108,16 @@ async function main() {
     targetMarker.addToScene(scene);
    
     const checkpoint = new Checkpoint();
-    checkpoint.addToScene(scene);
+    //checkpoint.addToScene(scene);
 
     const npc = new NPC(signal, checkpoint);
     npc.mesh.position.set(0, 0, 26);
     npc.addToScene(scene);
     
-    const pawns = new Pawns(new BoxGeometry(), 
-        new MeshPhongMaterial({ color: 0xFF0000 }), 12, new Vector3())
+    const pawns = new PawnManager(new BoxGeometry(), 
+        new MeshPhongMaterial({ color: 0xFF0000 }), 16)
     pawns.addToScene(scene);
-    pawns.spawn();
-    pawns.update(.016);
+    pawns.spawn(400);
 
     const arrows = new ArcProjectiles(new BoxGeometry(.2, 1, .2),
         new MeshBasicMaterial({color: 0x0055EE}), 32, signal); 
@@ -178,10 +176,11 @@ async function main() {
         playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
         targetMarker.update(player.mesh.position, raycastPosition);
-        npc.update(delta); 
+        //npc.update(delta); 
         arrows.update(delta)
         arrows.checkCollision(floor.hitbox, pawns.pawns);
-        //enemies.update(delta);
+        //pawns.spawn(delta);
+        //pawns.update(delta);
         //shake.update(delta);
         //explosion.update(delta);        
         //parts.update(delta, player.mesh.position);
@@ -203,6 +202,20 @@ async function main() {
         /*
             show particles, check if enemies nearby
         */
+        for (let P of pawns.pawns) {
+            const dist = P.position.distanceTo(position);
+            if (dist < .5) {
+                P.onHit(100);
+            }
+            else if (dist < 2) {
+                const t = 1 - MathUtils.clamp((dist - .5) / 1.5, 0, 1);
+                const damage = 80 * t;
+                P.onHit(damage);
+            }
+        }
+    })
+    signal.register("arrow-hit-enemy", enemy => {
+        enemy.onHit(100);
     })
 
     window.addEventListener('resize', () => {

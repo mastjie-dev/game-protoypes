@@ -2,6 +2,12 @@ import {
     InstancedMesh, Vector3, Object3D, Vector2, MathUtils,
 } from 'three'
 
+const STATE = {
+    DORMANT: 0,
+    ACTIVE: 1,
+    HIT: 2,
+};
+
 export default class ArcProjectiles {
 	constructor(geometry, material, count, signal) {
 		this.count = count;
@@ -23,6 +29,7 @@ export default class ArcProjectiles {
             this.mesh.setMatrixAt(i, this.dummy.matrix);
         }
         this.mesh.instanceMatrix.needsUpdate = true;
+        this.mesh.frustumCulled = false;
 
 		this.projectiles = [];
 		for (let i = 0; i < count; i++) {
@@ -34,8 +41,8 @@ export default class ArcProjectiles {
                 distance: 0,
                 elapsed: 0,
                 flightTime: 0,
-				active: false
-			});
+			    state: STATE.DORMANT,
+            });
 		}
 	}
 
@@ -48,19 +55,25 @@ export default class ArcProjectiles {
         arrow.start.copy(position).add(this.offset);
         arrow.target.copy(target);
         arrow.distance = position.distanceTo(target);
-        arrow.active = true;
+        arrow.state = STATE.ACTIVE;
 
         const t = (arrow.distance - 8) / 16; // TODO: remove hardcoded
         arrow.flightTime = MathUtils.lerp(.65, .85, t);
 		this.index++;
 	}
 
-    _getTrajectoryPosition(arrow, t, position, curveAmount = 0.35) {
+    _getTrajectoryPosition(arrow, t, curveAmount = 0.35) {
         const { start, target, distance } = arrow;
         const x = MathUtils.lerp(start.x, target.x, t);
         const z = MathUtils.lerp(start.z, target.z, t);
         const y = Math.sin(Math.PI * t) * distance * curveAmount;
-        position.set(x, y, z);
+        arrow.position.set(x, y, z);
+
+        arrow.direction.set(
+            target.x - start.x,
+            Math.PI * Math.cos(Math.PI * t) * distance * curveAmount,
+            target.z - start.z
+        ).normalize();
     }
 
     addToScene(scene) {
@@ -69,41 +82,54 @@ export default class ArcProjectiles {
 
     checkCollision(floor, enemies) {
         for (let arrow of this.projectiles) {
-            if (!arrow.active) continue;
+            if (arrow.state !== STATE.ACTIVE) continue;
 
             const head = arrow.direction.clone().multiplyScalar(.5)
                 .add(arrow.position);
             if (floor.containsPoint(head)) {
-                this.signal.emit("arrow-hit-floor", head);
                 this.clear(arrow); 
+                this.signal.emit("arrow-hit-floor", head);
                 continue;
             }
+            
+            /*
             for (let enemy of enemies) {
                 if (enemy.box.containsPoint(head)) {
-                    this.clear(arrow); 
-                    console.log("emit arrow hit enemy");
+                    this.clear(arrow);
+                    this.signal.emit("arrow-hit-enemy", enemy);
+                    break;
                 }
             }
+            */
         }        
     }
 	
     update(deltaTime) {
 	    let i = 0;
         for (let arrow of this.projectiles) {
-            if (!arrow.active) {
+            if (arrow.state === STATE.DORMANT) {
                 i++;
                 continue;
             };
-            
-            const t = arrow.elapsed / arrow.flightTime;
-            this._getTrajectoryPosition(arrow, t, arrow.position);
-            arrow.direction.copy(arrow.target).sub(arrow.position).normalize();
-            arrow.elapsed += deltaTime;
 
-            this.dummy.position.copy(arrow.position);
-			this.dummy.quaternion.setFromUnitVectors(
-				new Vector3(0, 0, 1), arrow.direction);
-			this.dummy.updateMatrix();
+            if (arrow.state === STATE.HIT) {
+                arrow.state = STATE.DORMANT;
+                this.dummy.scale.set(0, 0, 0);
+            }
+            else {
+                const t = arrow.elapsed / arrow.flightTime;
+                this._getTrajectoryPosition(arrow, t);
+                //arrow.direction.copy(arrow.target).sub(arrow.position).normalize();
+                arrow.elapsed += deltaTime;
+                const unit = new Vector3(0, 1, 0).normalize();
+
+                this.dummy.position.copy(arrow.position);
+                this.dummy.quaternion.setFromUnitVectors(
+                    unit, arrow.direction);
+                this.dummy.scale.set(1, 1, 1);
+            }
+            
+            this.dummy.updateMatrix();
 			this.mesh.setMatrixAt(i, this.dummy.matrix);
             i++;
         }
@@ -111,23 +137,10 @@ export default class ArcProjectiles {
     }
 
     clear(projectile) {
-        projectile.active = false;
+        projectile.state = STATE.HIT;
         projectile.elapsed = 0;
         projectile.flightTime = 0;
         projectile.position.set(0, -5, 0);
-        //projectile.start.set(0, 0, 0);
-        //projectile.target.set(0, 0, 0);
     }
-
-	reset() {
-		this.index = 0;
-
-		for (const projectile of this.projectiles) {
-			projectile.position.set(0, 0, 0);
-            projectile.velocity.set(0, 0, 0);
-			projectile.speed = 0;
-			projectile.active = false;
-		}
-	}
 }
 
