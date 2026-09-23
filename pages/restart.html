@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Boxy Action - You Died</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .game-bg {
+      background-color: #111827;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .game-button {
+      transition:
+        transform 100ms ease,
+        box-shadow 100ms ease;
+    }
+
+    .game-button:hover {
+      transform: translate(-2px, -2px);
+    }
+
+    .game-button:active {
+      transform: translate(6px, 6px);
+      box-shadow: 0 0 0 #000 !important;
+    }
+
+    .death-title {
+      animation: death-pop 350ms ease-out;
+    }
+
+    @keyframes death-pop {
+      0% {
+        transform: scale(1.3);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="game-bg min-h-screen overflow-hidden text-white">
+
+  <main class="relative flex min-h-screen items-center justify-center px-6">
+
+    <!-- Decorative blocks -->
+    <div
+      class="absolute left-[10%] top-[15%]
+             h-10 w-10
+             rotate-12
+             bg-red-500
+             shadow-[6px_6px_0_#000]"
+    ></div>
+
+    <div
+      class="absolute right-[12%] top-[18%]
+             h-14 w-14
+             -rotate-6
+             bg-orange-400
+             shadow-[7px_7px_0_#000]"
+    ></div>
+
+    <div
+      class="absolute bottom-[17%] left-[14%]
+             h-12 w-12
+             -rotate-12
+             bg-pink-500
+             shadow-[6px_6px_0_#000]"
+    ></div>
+
+    <div
+      class="absolute bottom-[12%] right-[10%]
+             h-8 w-8
+             rotate-6
+             bg-cyan-400
+             shadow-[5px_5px_0_#000]"
+    ></div>
+
+
+    <!-- Death screen -->
+    <section class="relative w-full max-w-md text-center">
+
+      <!-- Death icon -->
+      <div
+        class="mx-auto mb-6
+               flex h-24 w-24
+               items-center justify-center
+               bg-red-500
+               text-5xl
+               font-black
+               text-white
+               shadow-[8px_8px_0_#000]
+               rotate-3"
+      >
+        X
+      </div>
+
+
+      <!-- Title -->
+      <div class="death-title">
+
+        <h1
+          class="text-6xl font-black uppercase
+                 tracking-tight text-white"
+        >
+          You Died
+        </h1>
+
+        <div
+          class="mx-auto mt-4
+                 inline-block
+                 -rotate-2
+                 bg-white
+                 px-5 py-2
+                 shadow-[5px_5px_0_#000]"
+        >
+          <p class="text-sm font-black uppercase tracking-[0.25em] text-slate-950">
+            Better luck next time
+          </p>
+        </div>
+
+      </div>
+
+
+      <!-- Quick stats -->
+      <div class="mt-10 grid grid-cols-3 gap-3">
+
+        <div
+          class="bg-slate-800
+                 px-3 py-4
+                 shadow-[4px_4px_0_#000]"
+        >
+          <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Score
+          </p>
+
+          <p class="mt-1 text-xl font-black text-white">
+            8,320
+          </p>
+        </div>
+
+        <div
+          class="bg-slate-800
+                 px-3 py-4
+                 shadow-[4px_4px_0_#000]"
+        >
+          <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Combo
+          </p>
+
+          <p class="mt-1 text-xl font-black text-lime-400">
+            x12
+          </p>
+        </div>
+
+        <div
+          class="bg-slate-800
+                 px-3 py-4
+                 shadow-[4px_4px_0_#000]"
+        >
+          <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Time
+          </p>
+
+          <p class="mt-1 text-xl font-black text-white">
+            01:58
+          </p>
+        </div>
+
+      </div>
+
+
+      <!-- Restart button -->
+      <div class="mt-8">
+
+        <button
+          class="game-button
+                 w-full
+                 bg-lime-400
+                 px-8 py-6
+                 text-2xl font-black uppercase
+                 tracking-wide
+                 text-slate-950
+                 shadow-[9px_9px_0_#000]
+                 hover:bg-lime-300"
+        >
+          ↻ &nbsp; Restart
+        </button>
+
+      </div>
+
+
+      <!-- Secondary action -->
+      <button
+        class="game-button
+               mt-5
+               px-6 py-3
+               text-sm font-black uppercase
+               tracking-widest
+               text-slate-400
+               hover:text-white"
+      >
+        ⌂ &nbsp; Main Menu
+      </button>
+
+
+      <!-- Hint -->
+      <p class="mt-8 text-xs font-bold uppercase tracking-widest text-slate-500">
+        Don't give up yet.
+      </p>
+
+    </section>
+
+  </main>
+
+</body>
+</html>

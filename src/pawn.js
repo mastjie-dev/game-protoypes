@@ -14,15 +14,17 @@ const STATE = {
 const PAWN_BOX_SIZE = new Vector3(1.2, 2.4, 1.2);
 
 export class Pawn {
-    constructor(id) {
+    constructor(id, signal) {
         this.id = id;
+        this.signal = signal;
+
         this.health = 100;
         this.position = new Vector3();
         this.direction = new Vector3();
         this.speed = MathUtils.lerp(2.9, 3.8, Math.random());
 
         this.attackPower = 15;
-        this.attackInterval = MathUtils.lerp(Math.random(), 12, 15);
+        this.attackInterval = MathUtils.lerp(Math.random(), 2, 2.5);
         this.attackTimer = 0;
         this.invulnerable = true;
         this.invulnerableTimer = 3;
@@ -83,24 +85,25 @@ export class Pawn {
             this.position.add(velocity);
             this.box.setFromCenterAndSize(this.position, PAWN_BOX_SIZE);
         }
-        else {
+        else if (this.state === STATE.ATTACK) {
             this.attackTimer++;
+            // maybe animation before explode
             if (this.attackTimer > this.attackInterval) {
-                this.attackTimer = 0;
-                // emit signal attack target
+                this.state = STATE.DYING;
+                this.signal.emit("pawn-explode");
             }
         }
     }
 }
 
 export class PawnManager {
-    constructor(geometry, material, count) {
+    constructor(geometry, material, count, signal) {
         this.count = count;
 
         this.pawns = [];
         this.meshes = [];
         for (let i = 0; i < count; i++) {
-            this.pawns.push(new Pawn(i));
+            this.pawns.push(new Pawn(i, signal));
             this.meshes.push(new Mesh(geometry, material));
         }
 
@@ -135,7 +138,7 @@ export class PawnManager {
             const rounds = [...this.rounds];
             this._shuffle(rounds);
             const position = new Vector3();
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 1; i++) {
                 const radian = rounds.pop() / 8 * TAU;
                 this.spawnTimer = 0;
                 position.x = Math.cos(radian) * 25;

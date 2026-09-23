@@ -75,20 +75,14 @@ export class Checkpoint {
 }
 
 export class NPC {
-    constructor(signal, target) {
+    constructor(signal) {
         this.signal = signal;
-        this.target = target;
         this.health = 100;
 
-        const geometry = new CapsuleGeometry(.5, 1.5);
-        geometry.translate(0, 1.5, 0);
+        const geometry = new BoxGeometry(2, 4, 2);
         const material = new MeshPhongMaterial({ color: 0x0022FF })
         this.mesh = new Mesh(geometry, material);
         this.mesh.castShadow = true;
-
-        this.state = NPC_STATE.MOVE;
-        this.repairTimer = 0;
-        this.repairInterval = 5;
 
         // TODO: health accept offset position
         //this.healthbar = new Healthbar();
@@ -99,7 +93,7 @@ export class NPC {
         scene.add(this.mesh);
     }
 
-    takeDamage(amount) {
+    onHit(amount) {
         if (this.health === 0) {
             this.signal.emit("npc-dead");
             return;
@@ -108,25 +102,5 @@ export class NPC {
         this.health = Math.max(0, this.health - amount);
     }
 
-    get position() {
-        return this.mesh.position;
-    }
-
-    update(delta) {
-        if (this.state === NPC_STATE.WORK) {
-            this.repairTimer += delta;
-            if (this.repairTimer > this.repairInterval) {
-                this.target.repair(2);
-                this.repairTimer = 0;
-            }
-        }
-        else {
-            const dist = this.mesh.position.length();
-            if (dist < 3) {
-                this.state = NPC_STATE.WORK;
-                this.signal.emit("start-phase-01");
-            }
-            this.mesh.position.z -= delta * 3.5;
-        }
-    }
+    update(delta) {}
 }

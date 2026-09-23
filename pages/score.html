@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Boxy Action - Score</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .game-bg {
+      background-color: #111827;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .game-button {
+      transition:
+        transform 100ms ease,
+        box-shadow 100ms ease;
+    }
+
+    .game-button:hover {
+      transform: translate(-2px, -2px);
+    }
+
+    .game-button:active {
+      transform: translate(6px, 6px);
+      box-shadow: 0 0 0 #000 !important;
+    }
+
+    .score-number {
+      animation: score-pop 500ms cubic-bezier(.17,.67,.35,1.4);
+    }
+
+    @keyframes score-pop {
+      0% {
+        transform: scale(0.4);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="game-bg min-h-screen overflow-hidden text-white">
+
+  <main class="relative flex min-h-screen items-center justify-center px-6">
+
+    <!-- Decorative blocks -->
+    <div class="absolute left-[8%] top-[14%]
+                h-12 w-12
+                rotate-12
+                bg-cyan-400
+                shadow-[6px_6px_0_#000]">
+    </div>
+
+    <div class="absolute right-[10%] top-[20%]
+                h-8 w-8
+                -rotate-6
+                bg-pink-500
+                shadow-[5px_5px_0_#000]">
+    </div>
+
+    <div class="absolute bottom-[15%] left-[12%]
+                h-16 w-16
+                -rotate-6
+                bg-orange-400
+                shadow-[7px_7px_0_#000]">
+    </div>
+
+    <div class="absolute bottom-[12%] right-[15%]
+                h-10 w-10
+                rotate-12
+                bg-lime-400
+                shadow-[6px_6px_0_#000]">
+    </div>
+
+
+    <!-- Score card -->
+    <section class="relative w-full max-w-lg">
+
+      <!-- NEW HIGH SCORE -->
+      <div class="mb-6 text-center">
+        <span
+          class="inline-block
+                 rotate-2
+                 bg-pink-500
+                 px-5 py-2
+                 text-sm font-black uppercase tracking-[0.2em]
+                 text-white
+                 shadow-[5px_5px_0_#000]"
+        >
+          ★ New High Score ★
+        </span>
+      </div>
+
+
+      <!-- Main card -->
+      <div
+        class="bg-white
+               px-8 py-10
+               text-center
+               text-slate-950
+               shadow-[10px_10px_0_#000]"
+      >
+
+        <!-- Title -->
+        <p class="text-sm font-black uppercase tracking-[0.35em] text-slate-500">
+          Game Over
+        </p>
+
+        <h1 class="mt-3 text-4xl font-black uppercase">
+          Your Score
+        </h1>
+
+
+        <!-- Score -->
+        <div class="score-number my-8">
+          <div
+            class="inline-block
+                   bg-lime-400
+                   px-8 py-4
+                   shadow-[7px_7px_0_#000]"
+          >
+            <span class="text-7xl font-black tracking-tight">
+              12,450
+            </span>
+          </div>
+        </div>
+
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-4">
+
+          <div
+            class="bg-slate-100
+                   px-4 py-5
+                   shadow-[4px_4px_0_#cbd5e1]"
+          >
+            <p class="text-xs font-black uppercase tracking-widest text-slate-500">
+              Best
+            </p>
+
+            <p class="mt-1 text-2xl font-black">
+              12,450
+            </p>
+          </div>
+
+          <div
+            class="bg-slate-100
+                   px-4 py-5
+                   shadow-[4px_4px_0_#cbd5e1]"
+          >
+            <p class="text-xs font-black uppercase tracking-widest text-slate-500">
+              Time
+            </p>
+
+            <p class="mt-1 text-2xl font-black">
+              02:34
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- Buttons -->
+      <div class="mt-8 flex flex-col gap-4">
+
+        <button
+          class="game-button
+                 w-full
+                 bg-cyan-400
+                 px-8 py-5
+                 text-xl font-black uppercase
+                 text-slate-950
+                 shadow-[8px_8px_0_#000]
+                 hover:bg-cyan-300"
+        >
+          ↻ &nbsp; Play Again
+        </button>
+
+        <button
+          class="game-button
+                 w-full
+                 bg-orange-400
+                 px-8 py-4
+                 text-lg font-black uppercase
+                 text-slate-950
+                 shadow-[7px_7px_0_#000]
+                 hover:bg-orange-300"
+        >
+          ⌂ &nbsp; Main Menu
+        </button>
+
+      </div>
+
+
+      <!-- Footer -->
+      <p class="mt-8 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
+        Keep going. Beat your score.
+      </p>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
+

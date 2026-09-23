@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Boxy Action - Settings</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .game-bg {
+      background-color: #111827;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .game-button {
+      transition:
+        transform 100ms ease,
+        box-shadow 100ms ease;
+    }
+
+    .game-button:hover {
+      transform: translate(-2px, -2px);
+    }
+
+    .game-button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 0 0 0 #000 !important;
+    }
+
+    .setting-row {
+      transition: background-color 100ms ease;
+    }
+
+    .setting-row:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 58px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      display: none;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 #000;
+      transition: background 120ms ease;
+    }
+
+    .toggle-track::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 4px;
+      top: 4px;
+      background: white;
+      box-shadow: 2px 2px 0 #000;
+      transition: transform 120ms ease;
+    }
+
+    .toggle input:checked + .toggle-track {
+      background: #a3e635;
+    }
+
+    .toggle input:checked + .toggle-track::after {
+      transform: translateX(28px);
+    }
+
+    /* Range slider */
+    input[type="range"] {
+      appearance: none;
+      width: 150px;
+      height: 8px;
+      background: #cbd5e1;
+      box-shadow: 3px 3px 0 #000;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #22d3ee;
+      border: 0;
+      box-shadow: 3px 3px 0 #000;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #22d3ee;
+      border: 0;
+      box-shadow: 3px 3px 0 #000;
+    }
+  </style>
+</head>
+
+<body class="game-bg min-h-screen text-white">
+
+  <main class="min-h-screen px-5 py-10">
+
+    <section class="mx-auto w-full max-w-xl">
+
+      <!-- Header -->
+      <header class="mb-8 flex items-center justify-between">
+
+        <div>
+          <p class="text-xs font-black uppercase tracking-[0.3em] text-lime-400">
+            BOXY
+          </p>
+
+          <h1 class="mt-1 text-4xl font-black uppercase">
+            Settings
+          </h1>
+        </div>
+
+        <div
+          class="h-12 w-12
+                 rotate-3
+                 bg-orange-400
+                 shadow-[6px_6px_0_#000]
+                 flex items-center justify-center
+                 text-2xl"
+        >
+          ⚙
+        </div>
+
+      </header>
+
+
+      <!-- Settings panel -->
+      <div
+        class="bg-white
+               text-slate-950
+               shadow-[9px_9px_0_#000]"
+      >
+
+        <!-- AUDIO -->
+        <div class="bg-slate-950 px-5 py-3 text-white">
+          <p class="text-xs font-black uppercase tracking-[0.25em]">
+            Audio
+          </p>
+        </div>
+
+
+        <!-- Master Volume -->
+        <div class="setting-row flex items-center justify-between border-b-2 border-slate-200 px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Master Volume
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Overall game volume
+            </p>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <span class="w-10 text-right text-sm font-black">
+              80%
+            </span>
+
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="80"
+            />
+          </div>
+
+        </div>
+
+
+        <!-- Music Volume -->
+        <div class="setting-row flex items-center justify-between border-b-2 border-slate-200 px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Music
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Background music
+            </p>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <span class="w-10 text-right text-sm font-black">
+              65%
+            </span>
+
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="65"
+            />
+          </div>
+
+        </div>
+
+
+        <!-- SFX Volume -->
+        <div class="setting-row flex items-center justify-between px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Sound Effects
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Gameplay sounds
+            </p>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <span class="w-10 text-right text-sm font-black">
+              90%
+            </span>
+
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="90"
+            />
+          </div>
+
+        </div>
+
+
+        <!-- VISUAL -->
+        <div class="bg-slate-950 px-5 py-3 text-white">
+          <p class="text-xs font-black uppercase tracking-[0.25em]">
+            Visual
+          </p>
+        </div>
+
+
+        <!-- Camera Shake -->
+        <div class="setting-row flex items-center justify-between border-b-2 border-slate-200 px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Camera Shake
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Shake camera during impacts
+            </p>
+          </div>
+
+          <label class="toggle">
+            <input type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+
+        </div>
+
+
+        <!-- Screen Effects -->
+        <div class="setting-row flex items-center justify-between border-b-2 border-slate-200 px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Screen Effects
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Flashes and gameplay effects
+            </p>
+          </div>
+
+          <label class="toggle">
+            <input type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+
+        </div>
+
+
+        <!-- GAMEPLAY -->
+        <div class="bg-slate-950 px-5 py-3 text-white">
+          <p class="text-xs font-black uppercase tracking-[0.25em]">
+            Gameplay
+          </p>
+        </div>
+
+
+        <!-- Vibration -->
+        <div class="setting-row flex items-center justify-between border-b-2 border-slate-200 px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Vibration
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Controller vibration
+            </p>
+          </div>
+
+          <label class="toggle">
+            <input type="checkbox" />
+            <span class="toggle-track"></span>
+          </label>
+
+        </div>
+
+
+        <!-- Difficulty -->
+        <div class="setting-row flex items-center justify-between px-5 py-5">
+
+          <div>
+            <p class="font-black uppercase">
+              Difficulty
+            </p>
+
+            <p class="mt-1 text-xs font-bold text-slate-400">
+              Game difficulty
+            </p>
+          </div>
+
+          <button
+            class="bg-orange-400
+                   px-4 py-2
+                   text-sm font-black uppercase
+                   shadow-[4px_4px_0_#000]"
+          >
+            Normal
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- Reset -->
+      <button
+        class="game-button
+               mt-7
+               w-full
+               bg-red-500
+               px-6 py-4
+               text-sm font-black uppercase
+               tracking-widest
+               text-white
+               shadow-[7px_7px_0_#000]
+               hover:bg-red-400"
+      >
+        Reset Settings
+      </button>
+
+
+      <!-- Back -->
+      <button
+        class="game-button
+               mt-5
+               w-full
+               bg-cyan-400
+               px-6 py-5
+               text-lg font-black uppercase
+               text-slate-950
+               shadow-[8px_8px_0_#000]
+               hover:bg-cyan-300"
+      >
+        ← &nbsp; Back
+      </button>
+
+
+      <p class="mt-6 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
+        Changes are saved automatically
+      </p>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
+

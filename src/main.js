@@ -16,7 +16,7 @@ import CameraShake from './camera_shake.js'
 
 import { Player, PlayerController, PlayerCamera } from './player.js';
 import { PawnManager } from './pawn.js'
-import { Checkpoint, NPC } from './npc.js'
+import { NPC } from './npc.js'
 import { Parts } from './collectible.js'
 import Consumables from './consumables.js'
 import Floor from './floor.js'
@@ -29,7 +29,6 @@ import './style.css'
 /* 
    TODO:
    - collectibles
-   - consumables
    - particles manager
     - on projectiles hit
     - on enemies die
@@ -106,16 +105,12 @@ async function main() {
 
     const targetMarker = new TargetMarker(8, 16);
     targetMarker.addToScene(scene);
-   
-    const checkpoint = new Checkpoint();
-    //checkpoint.addToScene(scene);
 
-    const npc = new NPC(signal, checkpoint);
-    npc.mesh.position.set(0, 0, 26);
+    const npc = new NPC(signal);
     npc.addToScene(scene);
     
     const pawns = new PawnManager(new BoxGeometry(), 
-        new MeshPhongMaterial({ color: 0xFF0000 }), 16)
+        new MeshPhongMaterial({ color: 0xFF0000 }), 16, signal)
     pawns.addToScene(scene);
     pawns.spawn(400);
 
@@ -176,11 +171,10 @@ async function main() {
         playerController.update(delta, raycastPosition)
         playerCamera.update(delta);
         targetMarker.update(player.mesh.position, raycastPosition);
-        //npc.update(delta); 
         arrows.update(delta)
         arrows.checkCollision(floor.hitbox, pawns.pawns);
         //pawns.spawn(delta);
-        //pawns.update(delta);
+        pawns.update(delta);
         //shake.update(delta);
         //explosion.update(delta);        
         //parts.update(delta, player.mesh.position);
@@ -214,8 +208,8 @@ async function main() {
             }
         }
     })
-    signal.register("arrow-hit-enemy", enemy => {
-        enemy.onHit(100);
+    signal.register("pawn-explode", () => {
+        npc.onHit(40);
     })
 
     window.addEventListener('resize', () => {

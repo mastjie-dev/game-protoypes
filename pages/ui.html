@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boxy Action - Main Menu</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* Pixel-ish background grid */
+    .game-bg {
+      background-color: #111827;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Chunky game button */
+    .game-button {
+      transition:
+        transform 100ms ease,
+        box-shadow 100ms ease;
+    }
+
+    .game-button:hover {
+      transform: translate(-2px, -2px);
+    }
+
+    .game-button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 0 0 0 #000 !important;
+    }
+
+    /* Simple floating animation */
+    .logo {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+  </style>
+</head>
+
+<body class="game-bg min-h-screen overflow-hidden text-white">
+
+  <main class="relative flex min-h-screen items-center justify-center px-6">
+
+    <!-- Decorative blocks -->
+    <div class="absolute left-[8%] top-[15%] h-10 w-10 bg-lime-400 shadow-[6px_6px_0_#000]"></div>
+
+    <div class="absolute right-[12%] top-[25%] h-16 w-16 bg-orange-400 shadow-[7px_7px_0_#000]"></div>
+
+    <div class="absolute bottom-[18%] left-[15%] h-14 w-14 bg-cyan-400 shadow-[7px_7px_0_#000]"></div>
+
+    <div class="absolute bottom-[12%] right-[8%] h-8 w-8 bg-pink-500 shadow-[5px_5px_0_#000]"></div>
+
+
+    <!-- Main menu -->
+    <section class="relative w-full max-w-md text-center">
+
+      <!-- Logo -->
+      <div class="logo mb-12">
+        <div
+          class="inline-block bg-lime-400 px-6 py-3
+                 shadow-[8px_8px_0_#000]
+                 -rotate-2"
+        >
+          <h1 class="text-5xl font-black uppercase tracking-tight text-slate-950">
+            BOXY
+          </h1>
+        </div>
+
+        <div
+          class="mt-4 inline-block bg-white px-4 py-1
+                 shadow-[5px_5px_0_#000]
+                 rotate-1"
+        >
+          <p class="text-sm font-black uppercase tracking-[0.3em] text-slate-950">
+            Action Game
+          </p>
+        </div>
+      </div>
+
+
+      <!-- Buttons -->
+      <nav class="flex flex-col gap-5">
+
+        <button
+          class="game-button w-full
+                 bg-cyan-400
+                 px-8 py-5
+                 text-xl font-black uppercase tracking-wide
+                 text-slate-950
+                 shadow-[8px_8px_0_#000]
+                 hover:bg-cyan-300"
+        >
+          ▶ &nbsp; Play Game
+        </button>
+
+        <button
+          class="game-button w-full
+                 bg-orange-400
+                 px-8 py-5
+                 text-xl font-black uppercase tracking-wide
+                 text-slate-950
+                 shadow-[8px_8px_0_#000]
+                 hover:bg-orange-300"
+        >
+          ⚙ &nbsp; Settings
+        </button>
+
+        <button
+          class="game-button w-full
+                 bg-white
+                 px-8 py-5
+                 text-xl font-black uppercase tracking-wide
+                 text-slate-950
+                 shadow-[8px_8px_0_#000]
+                 hover:bg-slate-100"
+        >
+          ★ &nbsp; Credits
+        </button>
+
+      </nav>
+
+
+      <!-- Footer -->
+      <div class="mt-12 flex items-center justify-center gap-3">
+        <span class="h-2 w-2 bg-lime-400"></span>
+
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400">
+          Version 1.0.0
+        </p>
+
+        <span class="h-2 w-2 bg-lime-400"></span>
+      </div>
+
+    </section>
+  </main>
+
+</body>
+</html>
+
